@@ -4,235 +4,193 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SKYENGINE</title>
+<title>SkyEngine</title>
 
 <style>
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 body {
+  margin: 0;
   min-height: 100vh;
-  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #07152d, #102c55, #07152d);
   color: white;
-  background:
-    radial-gradient(circle at 50% 20%, #174d83, transparent 50%),
-    linear-gradient(135deg, #070d20, #101a36, #080d1c);
+  font-family: Arial, sans-serif;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
 }
 
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 25px 35px;
+.container {
+  width: 100%;
+  max-width: 650px;
+  text-align: center;
 }
 
 .logo {
-  font-size: 25px;
-  font-weight: 900;
-  letter-spacing: 2px;
-  color: #62c5ff;
-}
-
-.status {
-  color: #9bb5d5;
-  font-size: 13px;
-}
-
-main {
-  width: 90%;
-  max-width: 750px;
-  margin: auto;
-  text-align: center;
-  padding: 50px 0;
-}
-
-.planet {
   font-size: 55px;
-  animation: float 3s ease-in-out infinite;
+  font-weight: 900;
+  letter-spacing: -3px;
+  margin-bottom: 10px;
 }
 
-@keyframes float {
-  50% { transform: translateY(-12px); }
-}
-
-h1 {
-  font-size: clamp(42px, 9vw, 70px);
-  letter-spacing: 4px;
-  margin: 15px 0;
-  text-shadow: 0 0 30px #289cff70;
-}
-
-h1 span {
-  color: #55bdff;
+.logo span {
+  color: #38bdf8;
 }
 
 .subtitle {
-  color: #a8bddb;
-  margin-bottom: 38px;
-  font-size: 16px;
+  color: #b8c9df;
+  margin-bottom: 35px;
 }
 
-.searchbox {
+.tabs {
   display: flex;
-  padding: 8px;
-  border-radius: 50px;
-  background: white;
-  box-shadow: 0 0 35px #168cff55;
-  transition: .3s;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
-.searchbox:focus-within {
-  box-shadow: 0 0 50px #168cffaa;
+.tab {
+  background: #18375e;
+  border: 1px solid #31577e;
+  color: white;
+  padding: 12px 22px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.tab.active {
+  background: #168bd0;
+  border-color: #38bdf8;
+}
+
+.search-box {
+  display: flex;
+  background: white;
+  padding: 7px;
+  border-radius: 35px;
+  box-shadow: 0 10px 35px #0006;
 }
 
 input {
   flex: 1;
   min-width: 0;
-  padding: 15px;
   border: none;
   outline: none;
+  padding: 15px;
   font-size: 16px;
-  color: #111;
-  border-radius: 50px;
+  border-radius: 30px;
 }
 
-.searchbox button {
-  background: #168cff;
-  color: white;
+.search-button {
   border: none;
-  padding: 0 24px;
-  border-radius: 40px;
+  border-radius: 30px;
+  padding: 0 22px;
+  background: #168bd0;
+  color: white;
   font-weight: bold;
   cursor: pointer;
 }
 
-.shortcuts {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 30px;
+.search-button:hover {
+  background: #0872b5;
 }
 
-.shortcut {
-  color: white;
-  padding: 13px 18px;
-  background: #ffffff12;
-  border: 1px solid #ffffff30;
-  border-radius: 30px;
-  cursor: pointer;
-  transition: .2s;
-}
-
-.shortcut:hover {
-  background: #168cff;
-  transform: translateY(-4px);
-}
-
-.youtube {
-  background: #c91e2b;
-  border-color: #c91e2b;
-}
-
-.section {
-  margin-top: 65px;
-  color: #8ca7c8;
+.hint {
+  color: #9fb4ce;
   font-size: 13px;
-  letter-spacing: 2px;
+  margin-top: 22px;
 }
 
-footer {
-  text-align: center;
-  padding: 25px;
-  color: #728aa9;
+.footer {
+  margin-top: 70px;
+  color: #8198b5;
   font-size: 12px;
 }
 </style>
 </head>
 
 <body>
+<div class="container">
 
-<header>
-  <div class="logo">☁ SKYENGINE</div>
-  <div class="status">● ONLINE</div>
-</header>
+  <div class="logo">Sky<span>Engine</span></div>
+  <div class="subtitle">Explore the web your way.</div>
 
-<main>
+  <div class="tabs">
+    <button class="tab active" id="webTab"
+      onclick="setMode('web')">🌐 Web</button>
 
-  <div class="planet">🌌</div>
+    <button class="tab" id="youtubeTab"
+      onclick="setMode('youtube')">▶ YouTube</button>
+  </div>
 
-  <h1>SKY<span>ENGINE</span></h1>
-
-  <p class="subtitle">
-    Search Beyond Limits.
-  </p>
-
-  <form class="searchbox"
-        action="https://www.google.com/search"
-        method="GET">
-
+  <form class="search-box" onsubmit="search(event)">
     <input
+      id="query"
       type="search"
-      name="q"
-      placeholder="Explore the internet..."
+      placeholder="Search the web..."
       autocomplete="off"
-      required>
+      required
+    >
 
-    <button type="submit">
-      🔍 SEARCH
+    <button class="search-button" type="submit">
+      Search
     </button>
-
   </form>
 
-  <div class="shortcuts">
-
-    <button class="shortcut"
-      onclick="openSite('https://www.google.com')">
-      🔍 Google
-    </button>
-
-    <button class="shortcut youtube"
-      onclick="openSite('https://www.youtube.com')">
-      ▶ YouTube
-    </button>
-
-    <button class="shortcut"
-      onclick="openSite('https://www.wikipedia.org')">
-      📚 Wikipedia
-    </button>
-
-    <button class="shortcut"
-      onclick="openSite('https://www.dictionary.com')">
-      📖 Dictionary
-    </button>
-
-    <button class="shortcut"
-      onclick="openSite('https://www.coolmathgames.com')">
-      🎮 Games
-    </button>
-
+  <div class="hint" id="hint">
+    Search websites with SkyEngine.
   </div>
 
-  <div class="section">
-    YOUR GATEWAY TO THE INTERNET 🚀
+  <div class="footer">
+    SKYENGINE • YOUR SEARCH STARTS HERE
   </div>
 
-</main>
-
-<footer>
-  © 2026 SKYENGINE
-</footer>
+</div>
 
 <script>
-function openSite(url) {
-  window.open(url, "_blank", "noopener");
+let mode = "web";
+
+function setMode(newMode) {
+  mode = newMode;
+
+  document.getElementById("webTab")
+    .classList.toggle("active", mode === "web");
+
+  document.getElementById("youtubeTab")
+    .classList.toggle("active", mode === "youtube");
+
+  document.getElementById("query").placeholder =
+    mode === "web"
+      ? "Search the web..."
+      : "Search YouTube videos...";
+
+  document.getElementById("hint").textContent =
+    mode === "web"
+      ? "Search websites with SkyEngine."
+      : "Find videos on YouTube.";
+}
+
+function search(event) {
+  event.preventDefault();
+
+  const query = document
+    .getElementById("query")
+    .value.trim();
+
+  if (!query) return;
+
+  const encoded = encodeURIComponent(query);
+
+  const url = mode === "web"
+    ? "https://duckduckgo.com/?q=" + encoded
+    : "https://www.youtube.com/results?search_query=" + encoded;
+
+  window.open(url, "_blank", "noopener,noreferrer");
 }
 </script>
-
 </body>
 </html>
