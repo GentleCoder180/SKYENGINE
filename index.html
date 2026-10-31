@@ -123,7 +123,7 @@ function buildHouse(cx,cz,w,d,wall,roof){
  for(let x=x0-1;x<=x0+w;x++)for(let z=z0-1;z<=z0+d;z++)base=Math.max(base,heightAt(x,z));
  for(let x=x0-1;x<=x0+w;x++)for(let z=z0-1;z<=z0+d;z++){
   for(let y=heightAt(x,z)+1;y<=base;y++)addBlock(x,y,z,'dirt',false);
-  for(let y=base+1;y<=base+6;y++)blocks.delete(key(x,y,z));
+  for(let y=base+1;y<=base+6;y++){const k=key(x,y,z);blocks.delete(k);worldEdits.set(k,null);}
  }
  for(let x=x0;x<x0+w;x++)for(let z=z0;z<z0+d;z++){
   addBlock(x,base,z,'wood',false);
@@ -150,7 +150,7 @@ function buildVillageAndMine(){
  }
  // A framed mine shaft sits on the hill to the left of the village.
  const mx=-9,mz=-3,top=heightAt(mx,mz);
- for(let x=mx-1;x<=mx;x++)for(let z=mz-1;z<=mz;z++)for(let y=top-4;y<=top;y++)blocks.delete(key(x,y,z));
+ for(let x=mx-1;x<=mx;x++)for(let z=mz-1;z<=mz;z++)for(let y=top-4;y<=top;y++){const k=key(x,y,z);blocks.delete(k);worldEdits.set(k,null);}
  for(let x=mx-2;x<=mx+1;x++){addBlock(x,top+1,mz-2,'stone',false);addBlock(x,top+1,mz+1,'stone',false)}
  for(let z=mz-1;z<=mz;z++){addBlock(mx-2,top+1,z,'stone',false);addBlock(mx+1,top+1,z,'stone',false)}
  addBlock(mx-2,top+2,mz-2,'wood',false);addBlock(mx+1,top+2,mz-2,'wood',false);
@@ -245,7 +245,7 @@ document.getElementById('tool').onclick=cycleTool;
 document.getElementById('craftGlass').onclick=()=>{if(creative){toast('Creative mode: glass is unlimited');select('glass');return}if(inventory.sand>=2){inventory.sand-=2;inventory.glass+=2;updateStats();save();toast('Crafted 2 glass blocks!')}else toast('You need 2 sand blocks')};
 document.getElementById('mode').onclick=()=>{creative=!creative;document.getElementById('mode').textContent=creative?'Creative':'Survival';if(!creative){health=Math.min(20,health);hunger=Math.min(20,hunger)}updateStats();save();toast(creative?'Creative mode: unlimited blocks':'Survival mode: health and hunger enabled')};
 function start(){document.getElementById('menu').classList.add('hidden');paused=false;started=true;camera.position.set(player.x,player.y+0.65,player.z);if(renderer.domElement.requestPointerLock&&innerWidth>700)renderer.domElement.requestPointerLock();toast(creative?'Creative mode':'Survival mode — gather resources and stay fed!')}
-function pause(){paused=true;document.exitPointerLock?.();document.getElementById('menu').classList.remove('hidden');document.getElementById('play').textContent='▶ RESUME WORLD'}
+function pause(){save();paused=true;document.exitPointerLock?.();document.getElementById('menu').classList.remove('hidden');document.getElementById('play').textContent='▶ RESUME WORLD'}
 document.getElementById('play').onclick=()=>{if(!started)start();else{document.getElementById('menu').classList.add('hidden');paused=false;if(innerWidth>700)renderer.domElement.requestPointerLock?.()}};
 document.getElementById('newWorld').onclick=()=>{generate();localStorage.removeItem('skyblocks-world');save();started=true;start();toast('New endless world generated!')};
 document.getElementById('pause').onclick=pause;
