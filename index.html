@@ -23,6 +23,8 @@ button{font:inherit}#menu{position:fixed;inset:0;display:grid;place-items:center
 #videoLounge.open{display:grid}.video-card{width:min(850px,100%);padding:18px}.video-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.video-head h2{margin:0;font-size:22px}.video-form{display:flex;gap:8px;margin:14px 0}.video-form input{min-width:0;flex:1;background:#081426;border:1px solid var(--line);border-radius:9px;color:white;padding:11px}.video-frame{width:100%;aspect-ratio:16/9;background:#000;border:1px solid var(--line);border-radius:10px}.video-note{font-size:12px;color:#b8cbe0;line-height:1.5;margin:10px 0 0}
 @media(max-width:650px){#videoLoungeBtn{right:10px;top:300px}.video-form{flex-wrap:wrap}.video-head h2{font-size:18px}}
 @media(max-width:650px){#hud{padding:10px}.stats{font-size:10px}.slot{width:43px;height:47px;font-size:19px}.hotbar{gap:4px;padding:6px}.tips{font-size:10px}#mobile{display:grid;grid-template-columns:repeat(3,48px)}.brand{font-size:13px}}
+
+#loginGate{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:18px;background:linear-gradient(135deg,#071426ee,#0d2344ee)}#loginGate .login-card{width:min(390px,100%);padding:28px;text-align:center}#loginGate input{display:block;width:100%;margin:10px 0;padding:13px;border-radius:9px;border:1px solid var(--line);background:#081426;color:#fff;font:inherit}#loginError{min-height:20px;color:#ff9292;font-size:13px}
 </style>
 </head>
 <body>
@@ -45,7 +47,11 @@ button{font:inherit}#menu{position:fixed;inset:0;display:grid;place-items:center
   <p class="video-note">If the player is blocked, ask your teacher or school IT team to approve YouTube or the specific educational video. Don't use proxy sites or unapproved mirrors.</p>
  </div>
 </div>
+<div id="loginGate"><form class="panel login-card" id="loginForm"><h1 class="logo">SKY<span>ENGINE</span></h1><p class="tagline">Sign in to enter your world</p><input id="loginName" autocomplete="username" placeholder="Account name" required><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password" required><div id="loginError"></div><button class="primary" type="submit">SIGN IN</button></form></div>
 <div id="menu"><div class="panel menu-card"><h1 class="logo">SKY<span>ENGINE</span></h1><div class="tagline">INFINITE VOXEL WORLD · BUILD · EXPLORE · SURVIVE</div><div class="actions"><button class="primary" id="play">▶ PLAY WORLD</button><button class="secondary" id="newWorld">＋ NEW WORLD</button></div><div class="instructions"><b>Explore</b> a world that generates new land as you travel. Build a home, make a garden, or reshape the landscape.<br><b>Desktop:</b> WASD move · Shift sprint · mouse look · Space jump · left click mine · right click place.<br><b>Mobile:</b> use the movement pad and tap blocks to interact.<br><b>Tip:</b> Your world saves automatically in this browser.</div></div></div>
+<script>
+document.getElementById("loginForm").addEventListener("submit",function(e){e.preventDefault();const name=document.getElementById("loginName").value.trim();const pass=document.getElementById("loginPassword").value; if(name==="glick"&&pass==="Test"){document.getElementById("loginGate").style.display="none";}else{document.getElementById("loginError").textContent="Incorrect account name or password.";}});
+</script>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 
