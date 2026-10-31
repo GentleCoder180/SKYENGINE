@@ -42,24 +42,45 @@ const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(
 scene.add(new THREE.HemisphereLight(0xdaf3ff,0x62704b,2.0));
 const sun=new THREE.DirectionalLight(0xfff3d6,2.2);sun.position.set(-18,30,12);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-35;sun.shadow.camera.right=35;sun.shadow.camera.top=35;sun.shadow.camera.bottom=-35;scene.add(sun);
 function pixelTexture(base,accent,pattern='noise'){
- const c=document.createElement('canvas');c.width=c.height=16;const ctx=c.getContext('2d');ctx.fillStyle=base;ctx.fillRect(0,0,16,16);
- let seed=base.charCodeAt(1)||17;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
- for(let y=0;y<16;y++)for(let x=0;x<16;x++){const r=rand();if(pattern==='grass'&&y<4){ctx.fillStyle=r>.55?accent:base;ctx.fillRect(x,y,1,1)}else if(pattern==='wood'&&x%4===0){ctx.fillStyle=accent;ctx.fillRect(x,0,1,16)}else if(pattern==='brick'&&(y%4===0||((Math.floor(y/4)%2===0?x:x+2)%8===0))){ctx.fillStyle=accent;ctx.fillRect(x,y,1,1)}else if(r>.76){ctx.fillStyle=accent;ctx.fillRect(x,y,1,1)}}
+ const c=document.createElement('canvas');c.width=c.height=16;const ctx=c.getContext('2d');
+ ctx.fillStyle=base;ctx.fillRect(0,0,16,16);
+ let seed=base.charCodeAt(1)*97+(pattern.length*31);const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+ if(pattern==='wood'){
+  for(let x=1;x<16;x+=4){ctx.fillStyle=accent;ctx.fillRect(x,0,1,16)}
+  for(let i=0;i<12;i++){const y=Math.floor(rand()*16),x=Math.floor(rand()*16);ctx.fillStyle=accent;ctx.fillRect(x,y,2,1)}
+ }else if(pattern==='brick'){
+  for(let y=0;y<16;y+=5){ctx.fillStyle='#e0a08a';ctx.fillRect(0,y,16,1)}
+  for(let y=0;y<16;y+=5)for(let x=(Math.floor(y/5)%2)*4;x<16;x+=8){ctx.fillStyle='#e0a08a';ctx.fillRect(x,y,1,5)}
+  for(let i=0;i<12;i++){ctx.fillStyle=accent;ctx.fillRect(Math.floor(rand()*16),Math.floor(rand()*16),2,1)}
+ }else if(pattern==='grass'){
+  for(let i=0;i<58;i++){ctx.fillStyle=rand()>.5?accent:'#8bd65c';ctx.fillRect(Math.floor(rand()*16),Math.floor(rand()*16),1+Math.floor(rand()*2),1)}
+ }else if(pattern==='stone'){
+  for(let i=0;i<42;i++){ctx.fillStyle=rand()>.5?accent:'#b3bbc1';ctx.fillRect(Math.floor(rand()*16),Math.floor(rand()*16),1+Math.floor(rand()*2),1+Math.floor(rand()*2))}
+  ctx.fillStyle='#626d75';ctx.fillRect(3,4,4,1);ctx.fillRect(10,11,3,1);
+ }else if(pattern==='leaves'){
+  for(let i=0;i<34;i++){ctx.fillStyle=rand()>.5?accent:'#62b957';const x=Math.floor(rand()*15),y=Math.floor(rand()*15);ctx.fillRect(x,y,2,2)}
+ }else if(pattern==='sand'){
+  for(let i=0;i<45;i++){ctx.fillStyle=rand()>.5?accent:'#f3df9d';ctx.fillRect(Math.floor(rand()*16),Math.floor(rand()*16),1,1)}
+ }else if(pattern==='ore'){
+  for(let i=0;i<38;i++){ctx.fillStyle=rand()>.5?accent:'#68727b';const x=Math.floor(rand()*15),y=Math.floor(rand()*15);ctx.fillRect(x,y,2,2)}
+ }else{
+  for(let i=0;i<38;i++){if(rand()>.45){ctx.fillStyle=accent;ctx.fillRect(Math.floor(rand()*16),Math.floor(rand()*16),1+Math.floor(rand()*2),1+Math.floor(rand()*2))}}
+ }
  const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;tex.magFilter=THREE.NearestFilter;tex.minFilter=THREE.NearestMipmapNearestFilter;tex.generateMipmaps=true;tex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());return tex;
 }
 const mats={
- grass:new THREE.MeshLambertMaterial({map:pixelTexture('#62b94d','#3d913d','grass')}),
- dirt:new THREE.MeshLambertMaterial({map:pixelTexture('#8c5c38','#674027')}),
- stone:new THREE.MeshLambertMaterial({map:pixelTexture('#89939b','#68727b')}),
- wood:new THREE.MeshLambertMaterial({map:pixelTexture('#986338','#704523','wood')}),
- leaves:new THREE.MeshLambertMaterial({map:pixelTexture('#348a45','#1d6633')}),
- sand:new THREE.MeshLambertMaterial({map:pixelTexture('#d8c27d','#b9a15d')}),
- brick:new THREE.MeshLambertMaterial({map:pixelTexture('#b65e4b','#753b32','brick')}),
+ grass:new THREE.MeshLambertMaterial({map:pixelTexture('#4caf35','#276b24','grass')}),
+ dirt:new THREE.MeshLambertMaterial({map:pixelTexture('#9a6238','#684027')}),
+ stone:new THREE.MeshLambertMaterial({map:pixelTexture('#929ba3','#606b74','stone')}),
+ wood:new THREE.MeshLambertMaterial({map:pixelTexture('#b47a3f','#704523','wood')}),
+ leaves:new THREE.MeshLambertMaterial({map:pixelTexture('#258b35','#145524','leaves')}),
+ sand:new THREE.MeshLambertMaterial({map:pixelTexture('#e5cc7c','#b99a4d','sand')}),
+ brick:new THREE.MeshLambertMaterial({map:pixelTexture('#bd5540','#753b32','brick')}),
  glass:new THREE.MeshLambertMaterial({color:0x9ce8f5,transparent:true,opacity:.45}),
  flower:new THREE.MeshLambertMaterial({color:0xf3a6cb}),
- coal:new THREE.MeshLambertMaterial({map:pixelTexture('#34383d','#16191d')}),
- iron:new THREE.MeshLambertMaterial({map:pixelTexture('#b7a99a','#817568')}),
- gold:new THREE.MeshLambertMaterial({map:pixelTexture('#f2c94c','#b98c22')}),
+ coal:new THREE.MeshLambertMaterial({map:pixelTexture('#555d64','#20252a','ore')}),
+ iron:new THREE.MeshLambertMaterial({map:pixelTexture('#b5a38e','#a65b37','ore')}),
+ gold:new THREE.MeshLambertMaterial({map:pixelTexture('#8b9298','#ffd447','ore')}),
  diamond:new THREE.MeshLambertMaterial({map:pixelTexture('#55e5e5','#238f9b')})
 };
 const blockTypes=['grass','dirt','stone','wood','leaves','brick','sand','glass','coal','iron','gold','diamond'];const icons={grass:'🟩',dirt:'🟫',stone:'⬜',wood:'🪵',leaves:'🌿',brick:'🧱',sand:'🟨',glass:'🔹',coal:'⚫',iron:'🔩',gold:'🟡',diamond:'💎'};
@@ -223,8 +244,12 @@ function moveAxis(axis,amount){
  const steps=Math.max(1,Math.ceil(Math.abs(amount)/.12)),step=amount/steps;
  for(let i=0;i<steps;i++){
   const nx=player.x+(axis==='x'?step:0),nz=player.z+(axis==='z'?step:0);
-  if(!bodyCollides(nx,player.y,nz)){player.x=nx;player.z=nz;}
-  else break;
+  if(!bodyCollides(nx,player.y,nz)){player.x=nx;player.z=nz;continue;}
+  // Minecraft-style auto-step: climb a single-block ledge while grounded.
+  if(onGround&&!bodyCollides(nx,player.y+1,nz)){
+   player.y+=1;player.x=nx;player.z=nz;velocityY=0;continue;
+  }
+  break;
  }
 }
 let fpsFrames=0,fpsTime=0;function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.04);fpsFrames++;fpsTime+=dt;if(fpsTime>=.5){const f=Math.round(fpsFrames/fpsTime);fpsFrames=0;fpsTime=0;document.title='SKYBLOCKS · '+f+' FPS'}if(!paused){worldTime=(worldTime+dt*.018)%(Math.PI*2);const daylight=Math.max(.12,Math.sin(worldTime)*.5+.5);sun.intensity=.35+daylight*2.0;scene.background.setHSL(.56,.55,.25+daylight*.28);scene.fog.color.copy(scene.background);sun.position.set(Math.cos(worldTime)*28,Math.max(5,Math.sin(worldTime)*35),12);camera.rotation.set(pitch,yaw,0,'YXZ');const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));const move=new THREE.Vector3();if(keys.KeyW||keys.ArrowUp)move.add(forward);if(keys.KeyS||keys.ArrowDown)move.sub(forward);if(keys.KeyD||keys.ArrowRight)move.add(right);if(keys.KeyA||keys.ArrowLeft)move.sub(right);if(move.lengthSq())move.normalize().multiplyScalar((keys.ShiftLeft||keys.ShiftRight?9:6)*dt);moveAxis('x',move.x);moveAxis('z',move.z);updateChunks();
