@@ -38,12 +38,13 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.m
 const mount=document.getElementById('game');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x8ed0f2);scene.fog=new THREE.Fog(0x8ed0f2,24,75);
 const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,160);
+scene.add(camera);
 const viewArm=new THREE.Group();
 const sleeve=new THREE.Mesh(new THREE.BoxGeometry(.22,.34,.24),new THREE.MeshLambertMaterial({color:0x3b83bd}));
 sleeve.position.set(.43,-.39,-.58);viewArm.add(sleeve);
 const handMesh=new THREE.Mesh(new THREE.BoxGeometry(.19,.2,.2),new THREE.MeshLambertMaterial({color:0xc58b62}));
 handMesh.position.set(.43,-.57,-.62);viewArm.add(handMesh);
-const heldBlock=new THREE.Mesh(new THREE.BoxGeometry(.27,.27,.27),mats.grass);
+const heldBlock=new THREE.Mesh(new THREE.BoxGeometry(.27,.27,.27),new THREE.MeshLambertMaterial({color:0x4caf35}));
 heldBlock.position.set(.27,-.43,-.88);viewArm.add(heldBlock);
 camera.add(viewArm);
 
@@ -102,6 +103,7 @@ const mats={
  gold:new THREE.MeshLambertMaterial({map:pixelTexture('#8b9298','#ffd447','ore')}),
  diamond:new THREE.MeshLambertMaterial({map:pixelTexture('#55e5e5','#238f9b')})
 };
+heldBlock.material=mats.grass[2];
 const blockTypes=['grass','dirt','stone','wood','leaves','brick','sand','glass','coal','iron','gold','diamond'];
 const mineSeconds={grass:2,dirt:2,sand:1,leaves:1,wood:5,brick:12,stone:60,coal:60,iron:60,gold:60,diamond:60,glass:3};
 let mining=null;const mineStatus=document.getElementById('mineStatus');
