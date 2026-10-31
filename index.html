@@ -18,6 +18,10 @@ button{font:inherit}#menu{position:fixed;inset:0;display:grid;place-items:center
 #mineStatus{position:fixed;left:50%;top:calc(50% + 28px);transform:translateX(-50%);padding:7px 12px;border-radius:9px;background:#101a2beF;border:1px solid #ffffff40;font-size:12px;display:none;pointer-events:none;white-space:nowrap}#toast{position:fixed;left:50%;top:18%;transform:translate(-50%,-10px);background:#101a2beF;border:1px solid var(--line);padding:10px 15px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none;font-size:13px}#toast.show{opacity:1;transform:translate(-50%,0)}
 #pause{position:fixed;right:18px;top:75px;pointer-events:auto;background:var(--panel);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer}
 #mobile{display:none;position:fixed;bottom:112px;left:14px;gap:7px;pointer-events:auto}#mobile button{width:48px;height:48px;border-radius:12px;border:1px solid #fff5;background:#101a2bcc;color:white;font-size:18px}
+#videoLoungeBtn{position:fixed;right:18px;top:255px;pointer-events:auto;background:var(--panel);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;z-index:3}
+#videoLounge{display:none;position:fixed;inset:0;z-index:8;background:#06101ddd;place-items:center;padding:16px}
+#videoLounge.open{display:grid}.video-card{width:min(850px,100%);padding:18px}.video-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.video-head h2{margin:0;font-size:22px}.video-form{display:flex;gap:8px;margin:14px 0}.video-form input{min-width:0;flex:1;background:#081426;border:1px solid var(--line);border-radius:9px;color:white;padding:11px}.video-frame{width:100%;aspect-ratio:16/9;background:#000;border:1px solid var(--line);border-radius:10px}.video-note{font-size:12px;color:#b8cbe0;line-height:1.5;margin:10px 0 0}
+@media(max-width:650px){#videoLoungeBtn{right:10px;top:300px}.video-form{flex-wrap:wrap}.video-head h2{font-size:18px}}
 @media(max-width:650px){#hud{padding:10px}.stats{font-size:10px}.slot{width:43px;height:47px;font-size:19px}.hotbar{gap:4px;padding:6px}.tips{font-size:10px}#mobile{display:grid;grid-template-columns:repeat(3,48px)}.brand{font-size:13px}}
 </style>
 </head>
@@ -31,10 +35,44 @@ button{font:inherit}#menu{position:fixed;inset:0;display:grid;place-items:center
 <button id="pause">Ⅱ Pause</button><button id="craft" style="position:fixed;right:18px;top:165px;pointer-events:auto;background:var(--panel);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer">⚒ Craft</button><div id="craftPanel" class="panel" style="display:none;position:fixed;right:18px;top:210px;z-index:4;padding:14px;min-width:210px;pointer-events:auto"><b>CRAFTING</b><p style="font-size:12px;color:#cbd9e8">Turn materials into building blocks.</p><button class="secondary" id="craftGlass">🔹 2 Glass — costs 2 Sand</button><p style="font-size:11px;color:#9fb3ca">Press C to open/close</p></div><button id="tool" style="position:fixed;right:18px;top:210px;pointer-events:auto;background:var(--panel);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer">⛏ Hand</button><button id="mode" style="position:fixed;right:18px;top:120px;pointer-events:auto;background:var(--panel);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer">Creative</button>
 <div id="mobile"><button data-move="forward">↑</button><button data-move="jump">⤒</button><button data-move="left">←</button><button data-move="back">↓</button><button data-move="right">→</button></div>
 <div id="toast"></div><div id="mineStatus"></div>
+<button id="videoLoungeBtn">▶ Video Lounge</button>
+<div id="videoLounge">
+ <div class="panel video-card">
+  <div class="video-head"><h2>▶ SKYENGINE Video Lounge</h2><button class="secondary" id="closeVideoLounge">✕ Close</button></div>
+  <p class="video-note">Play a video your teacher has approved. Paste a YouTube video link or video ID below. This uses YouTube's normal embedded player; it does not bypass school network restrictions.</p>
+  <form class="video-form" id="videoForm"><input id="videoInput" type="text" placeholder="Paste YouTube video link or ID" aria-label="YouTube video link or ID"><button class="primary" type="submit">Load video</button></form>
+  <iframe class="video-frame" id="videoFrame" title="YouTube video player" src="about:blank" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+  <p class="video-note">If the player is blocked, ask your teacher or school IT team to approve YouTube or the specific educational video. Don't use proxy sites or unapproved mirrors.</p>
+ </div>
+</div>
 <div id="menu"><div class="panel menu-card"><h1 class="logo">SKY<span>ENGINE</span></h1><div class="tagline">INFINITE VOXEL WORLD · BUILD · EXPLORE · SURVIVE</div><div class="actions"><button class="primary" id="play">▶ PLAY WORLD</button><button class="secondary" id="newWorld">＋ NEW WORLD</button></div><div class="instructions"><b>Explore</b> a world that generates new land as you travel. Build a home, make a garden, or reshape the landscape.<br><b>Desktop:</b> WASD move · Shift sprint · mouse look · Space jump · left click mine · right click place.<br><b>Mobile:</b> use the movement pad and tap blocks to interact.<br><b>Tip:</b> Your world saves automatically in this browser.</div></div></div>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 
+function videoIdFromInput(value){
+ const raw=value.trim();
+ if(/^[a-zA-Z0-9_-]{11}$/.test(raw))return raw;
+ try{
+  const u=new URL(raw);
+  if(u.hostname==='youtu.be')return u.pathname.split('/').filter(Boolean)[0]||'';
+  if(u.hostname==='youtube.com'||u.hostname==='www.youtube.com'||u.hostname==='m.youtube.com'||u.hostname==='youtube-nocookie.com'){
+   if(u.pathname==='/watch')return u.searchParams.get('v')||'';
+   const parts=u.pathname.split('/').filter(Boolean);
+   if(['embed','shorts','live'].includes(parts[0]))return parts[1]||'';
+  }
+ }catch(e){}
+ return '';
+}
+const videoLounge=document.getElementById('videoLounge');
+document.getElementById('videoLoungeBtn').addEventListener('click',()=>videoLounge.classList.add('open'));
+document.getElementById('closeVideoLounge').addEventListener('click',()=>videoLounge.classList.remove('open'));
+videoLounge.addEventListener('click',e=>{if(e.target===videoLounge)videoLounge.classList.remove('open')});
+document.getElementById('videoForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ const id=videoIdFromInput(document.getElementById('videoInput').value);
+ if(!/^[a-zA-Z0-9_-]{11}$/.test(id)){toast('Please enter a valid YouTube video link or 11-character ID');return}
+ document.getElementById('videoFrame').src='https://www.youtube-nocookie.com/embed/'+id;
+});
 const mount=document.getElementById('game');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x8ed0f2);scene.fog=new THREE.Fog(0x8ed0f2,24,75);
 const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,160);
