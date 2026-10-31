@@ -97,6 +97,7 @@ const mats={
  sand:new THREE.MeshLambertMaterial({map:pixelTexture('#e5cc7c','#b99a4d','sand')}),
  brick:new THREE.MeshLambertMaterial({map:pixelTexture('#bd5540','#753b32','brick')}),
  glass:new THREE.MeshLambertMaterial({color:0x9ce8f5,transparent:true,opacity:.45}),
+ wool:new THREE.MeshLambertMaterial({map:pixelTexture('#f1eee5','#b8b2a7','wool')}),
  flower:new THREE.MeshLambertMaterial({color:0xf3a6cb}),
  coal:new THREE.MeshLambertMaterial({map:pixelTexture('#555d64','#20252a','ore')}),
  iron:new THREE.MeshLambertMaterial({map:pixelTexture('#b5a38e','#a65b37','ore')}),
@@ -104,11 +105,11 @@ const mats={
  diamond:new THREE.MeshLambertMaterial({map:pixelTexture('#55e5e5','#238f9b')})
 };
 heldBlock.material=mats.grass[2];
-const blockTypes=['grass','dirt','stone','wood','leaves','brick','sand','glass','coal','iron','gold','diamond'];
-const mineSeconds={grass:2,dirt:2,sand:1,leaves:1,wood:5,brick:12,stone:60,coal:60,iron:60,gold:60,diamond:60,glass:3};
+const blockTypes=['grass','dirt','stone','wood','leaves','brick','sand','glass','coal','iron','gold','diamond','wool'];
+const mineSeconds={grass:2,dirt:2,sand:1,leaves:1,wood:5,brick:12,stone:60,coal:60,iron:60,gold:60,diamond:60,glass:3,wool:2};
 let mining=null;const mineStatus=document.getElementById('mineStatus');
 const toolsList=[{name:'Hand',icon:'✋',power:1},{name:'Wood Pickaxe',icon:'🪓',power:2},{name:'Stone Pickaxe',icon:'⛏',power:4},{name:'Iron Pickaxe',icon:'⚒',power:8},{name:'Diamond Pickaxe',icon:'💎',power:20}];let toolIndex=0;
-function cycleTool(){toolIndex=(toolIndex+1)%toolsList.length;const t=toolsList[toolIndex];document.getElementById('tool').textContent=t.icon+' '+t.name;toast(t.name+' selected');}const icons={grass:'🟩',dirt:'🟫',stone:'⬜',wood:'🪵',leaves:'🌿',brick:'🧱',sand:'🟨',glass:'🔹',coal:'⚫',iron:'🔩',gold:'🟡',diamond:'💎'};
+function cycleTool(){toolIndex=(toolIndex+1)%toolsList.length;const t=toolsList[toolIndex];document.getElementById('tool').textContent=t.icon+' '+t.name;toast(t.name+' selected');}const icons={grass:'🟩',dirt:'🟫',stone:'⬜',wood:'🪵',leaves:'🌿',brick:'🧱',sand:'🟨',glass:'🔹',coal:'⚫',iron:'🔩',gold:'🟡',diamond:'💎',wool:'🧶'};
 const geo=new THREE.BoxGeometry(1,1,1);const blocks=new Map();const meshes=new Map();const instanceKeys=new Map();const key=(x,y,z)=>x+','+y+','+z;
 function syncRender(){for(const m of meshes.values())scene.remove(m);meshes.clear();instanceKeys.clear();const dummy=new THREE.Object3D();for(const type of new Set(blocks.values())){const entries=[...blocks.entries()].filter(([k,t])=>t===type);const inst=new THREE.InstancedMesh(geo,mats[type]||mats.grass,entries.length);const ids=[];entries.forEach(([k],i)=>{const [x,y,z]=k.split(',').map(Number);dummy.position.set(x,y,z);dummy.updateMatrix();inst.setMatrixAt(i,dummy.matrix);ids.push(k)});inst.instanceMatrix.needsUpdate=true;inst.castShadow=type!=='glass';inst.receiveShadow=true;inst.userData.type=type;scene.add(inst);meshes.set(type,inst);instanceKeys.set(type,ids)}}
 let selected='grass',placed=0,started=false,locked=false,paused=true,velocityY=0,onGround=false,worldTime=0;let animals=[],xpOrbs=[];let creative=false;let health=20,hunger=20,xp=0,level=0,hungerClock=0,regenClock=0,lastFallY=0;const inventory=Object.fromEntries(blockTypes.map(t=>[t,0]));inventory.food=0;const player={x:0,y:4,z:7};const keys={};let yaw=0,pitch=0;const ray=new THREE.Raycaster();ray.far=6;
