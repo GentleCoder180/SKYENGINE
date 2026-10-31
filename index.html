@@ -139,7 +139,7 @@ function buildHouse(cx,cz,w,d,wall,roof){
  for(let x=x0-1;x<=x0+w;x++)for(let z=z0-1;z<=z0+d;z++)addBlock(x,base+4,z,roof,false);
  addBlock(cx,base+1,z0+d-1,'wood',false);addBlock(cx,base+2,z0+d-1,'wood',false);
 }
-function preserveVillage(){for(const [k,v] of blocks){const [x,,z]=k.split(',').map(Number);if(x>=-13&&x<=17&&z>=-19&&z<=2)worldEdits.set(k,v)}}
+function preserveVillage(){for(const [k,v] of blocks){const [x,,z]=k.split(',').map(Number);const houseOrPath=x>=5&&x<=15&&z>=-17&&z<=5;const mine=x>=-11&&x<=-8&&z>=-5&&z<=-2;if(houseOrPath||mine)worldEdits.set(k,v)}}
 function buildVillageAndMine(){
  // Three small houses and a path form a visible village ahead of spawn.
  buildHouse(7,-7,5,5,'wood','brick');
@@ -312,6 +312,8 @@ let fpsFrames=0,fpsTime=0;function tick(){requestAnimationFrame(tick);const dt=M
  }updateSurvival(dt);updateXPOrbs(dt);camera.position.set(player.x,player.y+.35,player.z);camera.rotation.set(pitch,yaw,0,'YXZ');const moving=move.lengthSq()>0;const bob=moving?Math.sin(performance.now()*.012)*.025:0;viewArm.position.y=bob;viewArm.rotation.x=moving?Math.sin(performance.now()*.012)*.035:0;heldBlock.visible=creative||inventory[selected]>0;heldBlock.material=Array.isArray(mats[selected])?mats[selected][2]:(mats[selected]||mats.grass);for(const a of animals){a.phase+=dt*a.speed;a.group.position.x+=Math.sin(a.phase)*dt*.35;a.group.position.z+=Math.cos(a.phase*.7)*dt*.25;a.group.position.x=Math.max(-13,Math.min(13,a.group.position.x));a.group.position.z=Math.max(-13,Math.min(13,a.group.position.z));a.group.position.y=heightAt(Math.round(a.group.position.x),Math.round(a.group.position.z))+.5;a.group.rotation.y=Math.sin(a.phase)*.25} }renderer.render(scene,camera)}
 const clock=new THREE.Clock();generate();if(!load())save();buildHotbar();tick();
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,2.25));renderer.setSize(innerWidth,innerHeight)});
+// Autosave your location and world edits while you play.
+setInterval(()=>{if(started&&!paused)save()},5000);
 addEventListener('beforeunload',save);
 </script>
 </body>
