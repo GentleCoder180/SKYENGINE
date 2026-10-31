@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#101a2b">
-<title>SkyBlocks — A Voxel Sandbox</title>
+<title>SKYENGINE — Infinite Voxel World</title>
 <style>
 :root{color-scheme:dark;--panel:rgba(12,20,34,.88);--line:rgba(255,255,255,.14);--accent:#69d4ff}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#83c9ee;color:#fff;font-family:Inter,system-ui,Segoe UI,Arial,sans-serif}canvas{display:block}
@@ -31,7 +31,7 @@ button{font:inherit}#menu{position:fixed;inset:0;display:grid;place-items:center
 <button id="pause">Ⅱ Pause</button><button id="craft" style="position:fixed;right:18px;top:165px;pointer-events:auto;background:var(--panel);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer">⚒ Craft</button><div id="craftPanel" class="panel" style="display:none;position:fixed;right:18px;top:210px;z-index:4;padding:14px;min-width:210px;pointer-events:auto"><b>CRAFTING</b><p style="font-size:12px;color:#cbd9e8">Turn materials into building blocks.</p><button class="secondary" id="craftGlass">🔹 2 Glass — costs 2 Sand</button><p style="font-size:11px;color:#9fb3ca">Press C to open/close</p></div><button id="tool" style="position:fixed;right:18px;top:210px;pointer-events:auto;background:var(--panel);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer">⛏ Hand</button><button id="mode" style="position:fixed;right:18px;top:120px;pointer-events:auto;background:var(--panel);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer">Creative</button>
 <div id="mobile"><button data-move="forward">↑</button><button data-move="jump">⤒</button><button data-move="left">←</button><button data-move="back">↓</button><button data-move="right">→</button></div>
 <div id="toast"></div><div id="mineStatus"></div>
-<div id="menu"><div class="panel menu-card"><h1 class="logo">SKY<span>BLOCKS</span></h1><div class="tagline">INFINITE VOXEL WORLD · BUILD · EXPLORE · SURVIVE</div><div class="actions"><button class="primary" id="play">▶ PLAY WORLD</button><button class="secondary" id="newWorld">＋ NEW WORLD</button></div><div class="instructions"><b>Explore</b> a world that generates new land as you travel. Build a home, make a garden, or reshape the landscape.<br><b>Desktop:</b> WASD move · Shift sprint · mouse look · Space jump · left click mine · right click place.<br><b>Mobile:</b> use the movement pad and tap blocks to interact.<br><b>Tip:</b> Your world saves automatically in this browser.</div></div></div>
+<div id="menu"><div class="panel menu-card"><h1 class="logo">SKY<span>ENGINE</span></h1><div class="tagline">INFINITE VOXEL WORLD · BUILD · EXPLORE · SURVIVE</div><div class="actions"><button class="primary" id="play">▶ PLAY WORLD</button><button class="secondary" id="newWorld">＋ NEW WORLD</button></div><div class="instructions"><b>Explore</b> a world that generates new land as you travel. Build a home, make a garden, or reshape the landscape.<br><b>Desktop:</b> WASD move · Shift sprint · mouse look · Space jump · left click mine · right click place.<br><b>Mobile:</b> use the movement pad and tap blocks to interact.<br><b>Tip:</b> Your world saves automatically in this browser.</div></div></div>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 
@@ -157,7 +157,8 @@ function buildVillageAndMine(){
  addBlock(mx-2,top+2,mz+1,'wood',false);addBlock(mx+1,top+2,mz+1,'wood',false);
  for(let y=top;y>top-4;y--){addBlock(mx-2,y,mz-2,'wood',false);addBlock(mx+1,y,mz-2,'wood',false)}
 }
-const CHUNK_SIZE=16,CHUNK_RADIUS=2,loadedChunks=new Set(); // Infinite terrain streams in around the player.let lastChunkX=Infinity,lastChunkZ=Infinity;
+const CHUNK_SIZE=16,CHUNK_RADIUS=2,loadedChunks=new Set(); // Infinite terrain streams in around the player.
+let lastChunkX=Infinity,lastChunkZ=Infinity;
 function chunkId(cx,cz){return cx+','+cz}
 function generateChunk(cx,cz){
  const id=chunkId(cx,cz);if(loadedChunks.has(id))return;
@@ -207,7 +208,7 @@ function updateChunks(force=false){
 function generate(){
  blocks.clear();meshes.clear();loadedChunks.clear();worldEdits.clear();animals.forEach(a=>scene.remove(a.group));animals=[];placed=0;
  player.x=0;player.z=7;player.y=heightAt(0,7)+2;health=20;hunger=20;xp=0;level=0;for(const t of blockTypes)inventory[t]=0;creative=false;document.getElementById('mode').textContent='Survival';lastChunkX=Infinity;lastChunkZ=Infinity;
- updateChunks(true);buildVillageAndMine();spawnAnimals();syncRender();updateStats();
+ updateChunks(true);buildVillageAndMine();preserveVillage();spawnAnimals();syncRender();updateStats();
 }
 function updateStats(){document.getElementById('stats').innerHTML='WORLD: Endless Meadow<br>♥ '+health+'/20　🍗 '+hunger+'/20　✨ Lv '+level+' ('+xp+' XP)<br>BLOCKS: '+placed+' placed';document.getElementById('inventory').textContent=blockTypes.slice(0,8).map(t=>icons[t]+' '+(creative?'∞':inventory[t])).join('　')}
 function save(){const data={edits:[...worldEdits.entries()],player,selected,inventory,creative,health,hunger,xp,level};try{localStorage.setItem('skyblocks-world',JSON.stringify(data))}catch(e){toast('Could not save in this browser')}}
@@ -285,7 +286,7 @@ function moveAxis(axis,amount){
   break;
  }
 }
-let fpsFrames=0,fpsTime=0;function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.04);fpsFrames++;fpsTime+=dt;if(fpsTime>=.5){const f=Math.round(fpsFrames/fpsTime);fpsFrames=0;fpsTime=0;document.title='SKYBLOCKS · '+f+' FPS'}if(!paused){if(mining){const hit=targetBlock();const p=hit?.block;const needed=p?Math.max(.5,(mineSeconds[p.type]??3)/toolsList[toolIndex].power):3;if(!p||key(p.x,p.y,p.z)!==mining.key){stopMining()}else{mining.elapsed+=dt;const left=Math.max(0,needed-mining.elapsed);mineStatus.style.display='block';mineStatus.textContent='⛏ '+p.type.toUpperCase()+' · '+Math.ceil(left)+'s';if(mining.elapsed>=needed)breakMinedBlock(p)}}worldTime=(worldTime+dt*.018)%(Math.PI*2);const daylight=Math.max(.12,Math.sin(worldTime)*.5+.5);sun.intensity=.35+daylight*2.0;scene.background.setHSL(.56,.55,.25+daylight*.28);scene.fog.color.copy(scene.background);sun.position.set(Math.cos(worldTime)*28,Math.max(5,Math.sin(worldTime)*35),12);camera.rotation.set(pitch,yaw,0,'YXZ');const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));const move=new THREE.Vector3();if(keys.KeyW||keys.ArrowUp)move.add(forward);if(keys.KeyS||keys.ArrowDown)move.sub(forward);if(keys.KeyD||keys.ArrowRight)move.add(right);if(keys.KeyA||keys.ArrowLeft)move.sub(right);if(move.lengthSq())move.normalize().multiplyScalar((keys.ShiftLeft||keys.ShiftRight?9:6)*dt);moveAxis('x',move.x);moveAxis('z',move.z);updateChunks();
+let fpsFrames=0,fpsTime=0;function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.04);fpsFrames++;fpsTime+=dt;if(fpsTime>=.5){const f=Math.round(fpsFrames/fpsTime);fpsFrames=0;fpsTime=0;document.title='SKYENGINE · '+f+' FPS'}if(!paused){if(mining){const hit=targetBlock();const p=hit?.block;const needed=p?Math.max(.5,(mineSeconds[p.type]??3)/toolsList[toolIndex].power):3;if(!p||key(p.x,p.y,p.z)!==mining.key){stopMining()}else{mining.elapsed+=dt;const left=Math.max(0,needed-mining.elapsed);mineStatus.style.display='block';mineStatus.textContent='⛏ '+p.type.toUpperCase()+' · '+Math.ceil(left)+'s';if(mining.elapsed>=needed)breakMinedBlock(p)}}worldTime=(worldTime+dt*.018)%(Math.PI*2);const daylight=Math.max(.12,Math.sin(worldTime)*.5+.5);sun.intensity=.35+daylight*2.0;scene.background.setHSL(.56,.55,.25+daylight*.28);scene.fog.color.copy(scene.background);sun.position.set(Math.cos(worldTime)*28,Math.max(5,Math.sin(worldTime)*35),12);camera.rotation.set(pitch,yaw,0,'YXZ');const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));const move=new THREE.Vector3();if(keys.KeyW||keys.ArrowUp)move.add(forward);if(keys.KeyS||keys.ArrowDown)move.sub(forward);if(keys.KeyD||keys.ArrowRight)move.add(right);if(keys.KeyA||keys.ArrowLeft)move.sub(right);if(move.lengthSq())move.normalize().multiplyScalar((keys.ShiftLeft||keys.ShiftRight?9:6)*dt);moveAxis('x',move.x);moveAxis('z',move.z);updateChunks();
  // Jump and gravity with voxel collision on the player's full body.
  if(keys.Space&&onGround){velocityY=7.5;onGround=false;lastFallY=player.y}
  if(onGround)lastFallY=player.y;
