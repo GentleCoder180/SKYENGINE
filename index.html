@@ -24,20 +24,29 @@ button{font:inherit}#menu{position:fixed;inset:0;display:grid;place-items:center
 <body>
 <div id="game"></div>
 <div id="hud">
- <div id="top"><div class="panel brand">☁️ SKY<b>BLOCKS</b></div><div class="panel stats" id="stats">WORLD: Endless Meadow<br>♥ 20/20　🍗 20/20　XP 0<br>BLOCKS: 0 placed</div></div>
+ <div id="top"><div class="panel brand">⛏ SKY<b>ENGINE</b></div><div class="panel stats" id="stats">WORLD: Infinite Meadow<br>♥ 20/20　🍗 20/20　XP 0<br>BLOCKS: 0 placed</div></div>
  <div id="crosshair">+</div>
  <div id="bottom"><div class="panel tips">WASD move · Shift sprint · Space jump · Gravity · Hold left click mine · Right click place · 1–8 select · T change tool · C craft · Dig deep for ores · Esc pause</div><div class="panel tips" id="inventory">🟩 64　🟫 64　⬜ 64　🪵 64　🌿 64　🧱 64</div><div class="hotbar" id="hotbar"></div></div>
 </div>
 <button id="pause">Ⅱ Pause</button><button id="craft" style="position:fixed;right:18px;top:165px;pointer-events:auto;background:var(--panel);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer">⚒ Craft</button><div id="craftPanel" class="panel" style="display:none;position:fixed;right:18px;top:210px;z-index:4;padding:14px;min-width:210px;pointer-events:auto"><b>CRAFTING</b><p style="font-size:12px;color:#cbd9e8">Turn materials into building blocks.</p><button class="secondary" id="craftGlass">🔹 2 Glass — costs 2 Sand</button><p style="font-size:11px;color:#9fb3ca">Press C to open/close</p></div><button id="tool" style="position:fixed;right:18px;top:210px;pointer-events:auto;background:var(--panel);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer">⛏ Hand</button><button id="mode" style="position:fixed;right:18px;top:120px;pointer-events:auto;background:var(--panel);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer">Creative</button>
 <div id="mobile"><button data-move="forward">↑</button><button data-move="jump">⤒</button><button data-move="left">←</button><button data-move="back">↓</button><button data-move="right">→</button></div>
 <div id="toast"></div><div id="mineStatus"></div>
-<div id="menu"><div class="panel menu-card"><h1 class="logo">SKY<span>BLOCKS</span></h1><div class="tagline">An endless block world. Keep exploring.</div><div class="actions"><button class="primary" id="play">▶ PLAY WORLD</button><button class="secondary" id="newWorld">＋ NEW WORLD</button></div><div class="instructions"><b>Explore</b> a world that generates new land as you travel. Build a home, make a garden, or reshape the landscape.<br><b>Desktop:</b> WASD move · Shift sprint · mouse look · Space jump · left click mine · right click place.<br><b>Mobile:</b> use the movement pad and tap blocks to interact.<br><b>Tip:</b> Your world saves automatically in this browser.</div></div></div>
+<div id="menu"><div class="panel menu-card"><h1 class="logo">SKY<span>BLOCKS</span></h1><div class="tagline">INFINITE VOXEL WORLD · BUILD · EXPLORE · SURVIVE</div><div class="actions"><button class="primary" id="play">▶ PLAY WORLD</button><button class="secondary" id="newWorld">＋ NEW WORLD</button></div><div class="instructions"><b>Explore</b> a world that generates new land as you travel. Build a home, make a garden, or reshape the landscape.<br><b>Desktop:</b> WASD move · Shift sprint · mouse look · Space jump · left click mine · right click place.<br><b>Mobile:</b> use the movement pad and tap blocks to interact.<br><b>Tip:</b> Your world saves automatically in this browser.</div></div></div>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 
 const mount=document.getElementById('game');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x8ed0f2);scene.fog=new THREE.Fog(0x8ed0f2,24,75);
 const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,160);
+const viewArm=new THREE.Group();
+const sleeve=new THREE.Mesh(new THREE.BoxGeometry(.22,.34,.24),new THREE.MeshLambertMaterial({color:0x3b83bd}));
+sleeve.position.set(.43,-.39,-.58);viewArm.add(sleeve);
+const handMesh=new THREE.Mesh(new THREE.BoxGeometry(.19,.2,.2),new THREE.MeshLambertMaterial({color:0xc58b62}));
+handMesh.position.set(.43,-.57,-.62);viewArm.add(handMesh);
+const heldBlock=new THREE.Mesh(new THREE.BoxGeometry(.27,.27,.27),mats.grass);
+heldBlock.position.set(.27,-.43,-.88);viewArm.add(heldBlock);
+camera.add(viewArm);
+
 const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2.25));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.setClearColor(0x87ceeb,1);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;mount.appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xdaf3ff,0x62704b,2.0));
 const sun=new THREE.DirectionalLight(0xfff3d6,2.2);sun.position.set(-18,30,12);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-35;sun.shadow.camera.right=35;sun.shadow.camera.top=35;sun.shadow.camera.bottom=-35;scene.add(sun);
@@ -68,9 +77,18 @@ function pixelTexture(base,accent,pattern='noise'){
  }
  const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;tex.magFilter=THREE.NearestFilter;tex.minFilter=THREE.NearestMipmapNearestFilter;tex.generateMipmaps=true;tex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());return tex;
 }
+function grassSideTexture(){
+ const c=document.createElement('canvas');c.width=c.height=16;const ctx=c.getContext('2d');
+ ctx.fillStyle='#93603a';ctx.fillRect(0,0,16,16);
+ let seed=91827;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+ for(let i=0;i<45;i++){ctx.fillStyle=rand()>.5?'#a87343':'#75472d';ctx.fillRect(Math.floor(rand()*16),4+Math.floor(rand()*12),1+Math.floor(rand()*2),1+Math.floor(rand()*2))}
+ ctx.fillStyle='#347d27';ctx.fillRect(0,0,16,4);ctx.fillStyle='#58b83a';
+ for(let i=0;i<24;i++)ctx.fillRect(Math.floor(rand()*16),Math.floor(rand()*4),1,1);
+ const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;tex.magFilter=THREE.NearestFilter;tex.minFilter=THREE.NearestMipmapNearestFilter;return tex;
+}
 const mats={
  bedrock:new THREE.MeshLambertMaterial({map:pixelTexture('#242a31','#11161c','stone')}),
- grass:new THREE.MeshLambertMaterial({map:pixelTexture('#4caf35','#276b24','grass')}),
+ grass:[new THREE.MeshLambertMaterial({map:grassSideTexture()}),new THREE.MeshLambertMaterial({map:grassSideTexture()}),new THREE.MeshLambertMaterial({map:pixelTexture('#4caf35','#276b24','grass')}),new THREE.MeshLambertMaterial({map:pixelTexture('#9a6238','#684027')}),new THREE.MeshLambertMaterial({map:grassSideTexture()}),new THREE.MeshLambertMaterial({map:grassSideTexture()})],
  dirt:new THREE.MeshLambertMaterial({map:pixelTexture('#9a6238','#684027')}),
  stone:new THREE.MeshLambertMaterial({map:pixelTexture('#929ba3','#606b74','stone')}),
  wood:new THREE.MeshLambertMaterial({map:pixelTexture('#b47a3f','#704523','wood')}),
@@ -137,7 +155,7 @@ function buildVillageAndMine(){
  addBlock(mx-2,top+2,mz+1,'wood',false);addBlock(mx+1,top+2,mz+1,'wood',false);
  for(let y=top;y>top-4;y--){addBlock(mx-2,y,mz-2,'wood',false);addBlock(mx+1,y,mz-2,'wood',false)}
 }
-const CHUNK_SIZE=16,CHUNK_RADIUS=2,loadedChunks=new Set();let lastChunkX=Infinity,lastChunkZ=Infinity;
+const CHUNK_SIZE=16,CHUNK_RADIUS=2,loadedChunks=new Set(); // Infinite terrain streams in around the player.let lastChunkX=Infinity,lastChunkZ=Infinity;
 function chunkId(cx,cz){return cx+','+cz}
 function generateChunk(cx,cz){
  const id=chunkId(cx,cz);if(loadedChunks.has(id))return;
@@ -288,7 +306,7 @@ let fpsFrames=0,fpsTime=0;function tick(){requestAnimationFrame(tick);const dt=M
   player.y=landingTop+PLAYER_BOTTOM;velocityY=0;onGround=true;
  }else{
   velocityY=0;
- }updateSurvival(dt);updateXPOrbs(dt);camera.position.set(player.x,player.y+.35,player.z);camera.rotation.set(pitch,yaw,0,'YXZ');for(const a of animals){a.phase+=dt*a.speed;a.group.position.x+=Math.sin(a.phase)*dt*.35;a.group.position.z+=Math.cos(a.phase*.7)*dt*.25;a.group.position.x=Math.max(-13,Math.min(13,a.group.position.x));a.group.position.z=Math.max(-13,Math.min(13,a.group.position.z));a.group.position.y=heightAt(Math.round(a.group.position.x),Math.round(a.group.position.z))+.5;a.group.rotation.y=Math.sin(a.phase)*.25} }renderer.render(scene,camera)}
+ }updateSurvival(dt);updateXPOrbs(dt);camera.position.set(player.x,player.y+.35,player.z);camera.rotation.set(pitch,yaw,0,'YXZ');const moving=move.lengthSq()>0;const bob=moving?Math.sin(performance.now()*.012)*.025:0;viewArm.position.y=bob;viewArm.rotation.x=moving?Math.sin(performance.now()*.012)*.035:0;heldBlock.visible=creative||inventory[selected]>0;heldBlock.material=Array.isArray(mats[selected])?mats[selected][2]:(mats[selected]||mats.grass);for(const a of animals){a.phase+=dt*a.speed;a.group.position.x+=Math.sin(a.phase)*dt*.35;a.group.position.z+=Math.cos(a.phase*.7)*dt*.25;a.group.position.x=Math.max(-13,Math.min(13,a.group.position.x));a.group.position.z=Math.max(-13,Math.min(13,a.group.position.z));a.group.position.y=heightAt(Math.round(a.group.position.x),Math.round(a.group.position.z))+.5;a.group.rotation.y=Math.sin(a.phase)*.25} }renderer.render(scene,camera)}
 const clock=new THREE.Clock();generate();if(!load())save();buildHotbar();tick();
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,2.25));renderer.setSize(innerWidth,innerHeight)});
 addEventListener('beforeunload',save);
