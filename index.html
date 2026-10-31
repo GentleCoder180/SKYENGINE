@@ -37,8 +37,8 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.m
 
 const mount=document.getElementById('game');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x8ed0f2);scene.fog=new THREE.Fog(0x8ed0f2,24,75);
-const camera=new THREE.PerspectiveCamera(72,innerWidth/innerHeight,.1,120);
-const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2.25));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;mount.appendChild(renderer.domElement);
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,160);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2.25));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.setClearColor(0x87ceeb,1);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;mount.appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xdaf3ff,0x62704b,2.0));
 const sun=new THREE.DirectionalLight(0xfff3d6,2.2);sun.position.set(-18,30,12);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-35;sun.shadow.camera.right=35;sun.shadow.camera.top=35;sun.shadow.camera.bottom=-35;scene.add(sun);
 function pixelTexture(base,accent,pattern='noise'){
@@ -86,10 +86,13 @@ const mats={
 };
 const blockTypes=['grass','dirt','stone','wood','leaves','brick','sand','glass','coal','iron','gold','diamond'];
 const mineSeconds={grass:2,dirt:2,sand:1,leaves:1,wood:5,brick:12,stone:60,coal:60,iron:60,gold:60,diamond:60,glass:3};
-let mining=null;const mineStatus=document.getElementById('mineStatus');\nconst toolsList=[{name:'Hand',icon:'✋',power:1},{name:'Wood Pickaxe',icon:'🪓',power:2},{name:'Stone Pickaxe',icon:'⛏',power:4},{name:'Iron Pickaxe',icon:'⚒',power:8},{name:'Diamond Pickaxe',icon:'💎',power:20}];let toolIndex=0;\nfunction cycleTool(){toolIndex=(toolIndex+1)%toolsList.length;const t=toolsList[toolIndex];document.getElementById('tool').textContent=t.icon+' '+t.name;toast(t.name+' selected');}const icons={grass:'🟩',dirt:'🟫',stone:'⬜',wood:'🪵',leaves:'🌿',brick:'🧱',sand:'🟨',glass:'🔹',coal:'⚫',iron:'🔩',gold:'🟡',diamond:'💎'};
+let mining=null;const mineStatus=document.getElementById('mineStatus');
+const toolsList=[{name:'Hand',icon:'✋',power:1},{name:'Wood Pickaxe',icon:'🪓',power:2},{name:'Stone Pickaxe',icon:'⛏',power:4},{name:'Iron Pickaxe',icon:'⚒',power:8},{name:'Diamond Pickaxe',icon:'💎',power:20}];let toolIndex=0;
+function cycleTool(){toolIndex=(toolIndex+1)%toolsList.length;const t=toolsList[toolIndex];document.getElementById('tool').textContent=t.icon+' '+t.name;toast(t.name+' selected');}const icons={grass:'🟩',dirt:'🟫',stone:'⬜',wood:'🪵',leaves:'🌿',brick:'🧱',sand:'🟨',glass:'🔹',coal:'⚫',iron:'🔩',gold:'🟡',diamond:'💎'};
 const geo=new THREE.BoxGeometry(1,1,1);const blocks=new Map();const meshes=new Map();const instanceKeys=new Map();const key=(x,y,z)=>x+','+y+','+z;
 function syncRender(){for(const m of meshes.values())scene.remove(m);meshes.clear();instanceKeys.clear();const dummy=new THREE.Object3D();for(const type of new Set(blocks.values())){const entries=[...blocks.entries()].filter(([k,t])=>t===type);const inst=new THREE.InstancedMesh(geo,mats[type]||mats.grass,entries.length);const ids=[];entries.forEach(([k],i)=>{const [x,y,z]=k.split(',').map(Number);dummy.position.set(x,y,z);dummy.updateMatrix();inst.setMatrixAt(i,dummy.matrix);ids.push(k)});inst.instanceMatrix.needsUpdate=true;inst.castShadow=type!=='glass';inst.receiveShadow=true;inst.userData.type=type;scene.add(inst);meshes.set(type,inst);instanceKeys.set(type,ids)}}
 let selected='grass',placed=0,started=false,locked=false,paused=true,velocityY=0,onGround=false,worldTime=0;let animals=[],xpOrbs=[];let creative=false;let health=20,hunger=20,xp=0,level=0,hungerClock=0,regenClock=0,lastFallY=0;const inventory=Object.fromEntries(blockTypes.map(t=>[t,0]));const player={x:0,y:4,z:7};const keys={};let yaw=0,pitch=0;const ray=new THREE.Raycaster();ray.far=6;
+const targetOutline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.012,1.012,1.012)),new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.95,depthTest:true}));targetOutline.visible=false;targetOutline.renderOrder=10;scene.add(targetOutline);
 const worldEdits=new Map();
 function addBlock(x,y,z,type='grass',save=true){const k=key(x,y,z);if(blocks.has(k))return false;blocks.set(k,type);if(save){worldEdits.set(k,type);placed++;updateStats();syncRender()}return true}
 function removeBlock(x,y,z){const k=key(x,y,z);if(y<=-6){toast('Bedrock is unbreakable!');return false}if(!blocks.has(k))return false;blocks.delete(k);worldEdits.set(k,null);placed=Math.max(0,placed-1);updateStats();syncRender();return true}
@@ -216,7 +219,8 @@ function toast(s){const el=document.getElementById('toast');el.textContent=s;el.
 function buildHotbar(){const bar=document.getElementById('hotbar');bar.innerHTML='';blockTypes.forEach((t,i)=>{const b=document.createElement('button');b.className='slot'+(t===selected?' active':'');b.innerHTML='<small>'+(i+1)+'</small>'+icons[t];b.title=t;b.onclick=()=>select(t);bar.appendChild(b)})}
 function select(t){selected=t;buildHotbar();toast(t[0].toUpperCase()+t.slice(1)+' selected')}
 function toggleCraft(){const p=document.getElementById('craftPanel');p.style.display=p.style.display==='none'?'block':'none'}
-document.getElementById('craft').onclick=toggleCraft;\ndocument.getElementById('tool').onclick=cycleTool;
+document.getElementById('craft').onclick=toggleCraft;
+document.getElementById('tool').onclick=cycleTool;
 document.getElementById('craftGlass').onclick=()=>{if(creative){toast('Creative mode: glass is unlimited');select('glass');return}if(inventory.sand>=2){inventory.sand-=2;inventory.glass+=2;updateStats();save();toast('Crafted 2 glass blocks!')}else toast('You need 2 sand blocks')};
 document.getElementById('mode').onclick=()=>{creative=!creative;document.getElementById('mode').textContent=creative?'Creative':'Survival';if(!creative){health=Math.min(20,health);hunger=Math.min(20,hunger)}updateStats();save();toast(creative?'Creative mode: unlimited blocks':'Survival mode: health and hunger enabled')};
 function start(){document.getElementById('menu').classList.add('hidden');paused=false;started=true;camera.position.set(player.x,player.y+0.65,player.z);if(renderer.domElement.requestPointerLock&&innerWidth>700)renderer.domElement.requestPointerLock();toast(creative?'Creative mode':'Survival mode — gather resources and stay fed!')}
@@ -229,7 +233,7 @@ document.addEventListener('mousemove',e=>{if(!locked||paused)return;yaw-=e.movem
 document.addEventListener('keydown',e=>{keys[e.code]=true;if(/^Digit[1-8]$/.test(e.code))select(blockTypes[Number(e.code.slice(5))-1]);if(e.code==='Escape'&&started)pause();if(e.code==='KeyC'&&!paused)toggleCraft();if(e.code==='KeyT'&&!paused)cycleTool()});
 document.addEventListener('keyup',e=>keys[e.code]=false);
 renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
-function targetBlock(){camera.rotation.set(pitch,yaw,0,'YXZ');ray.setFromCamera(new THREE.Vector2(0,0),camera);const hit=ray.intersectObjects([...meshes.values()],false)[0];if(!hit)return null;const k=instanceKeys.get(hit.object.userData.type)?.[hit.instanceId];if(!k)return null;const [x,y,z]=k.split(',').map(Number);hit.block={x,y,z,type:hit.object.userData.type};return hit}
+function targetBlock(){camera.rotation.set(pitch,yaw,0,'YXZ');ray.setFromCamera(new THREE.Vector2(0,0),camera);const hit=ray.intersectObjects([...meshes.values()],false)[0];if(!hit){targetOutline.visible=false;return null}const k=instanceKeys.get(hit.object.userData.type)?.[hit.instanceId];if(!k){targetOutline.visible=false;return null}const [x,y,z]=k.split(',').map(Number);hit.block={x,y,z,type:hit.object.userData.type};targetOutline.position.set(x,y,z);targetOutline.visible=true;return hit}
 function startMining(){const hit=targetBlock();if(!hit)return;const p=hit.block;if(p.y<=-6){toast('Bedrock is unbreakable!');return}mining={key:key(p.x,p.y,p.z),elapsed:0};}
 function stopMining(){mining=null;mineStatus.style.display='none';}
 function breakMinedBlock(p){if(!removeBlock(p.x,p.y,p.z))return;if(!creative&&blockTypes.includes(p.type))inventory[p.type]=(inventory[p.type]||0)+1;if(['coal','iron','gold','diamond'].includes(p.type))gainXP(p.type==='diamond'?5:p.type==='gold'?3:p.type==='iron'?2:1,p.x,p.y,p.z);updateStats();save();stopMining();}
