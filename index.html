@@ -320,7 +320,7 @@ function updateChunks(force=false){
 }
 function generate(){
  blocks.clear();meshes.clear();loadedChunks.clear();worldEdits.clear();animals.forEach(a=>scene.remove(a.group));animals=[];placed=0;
- const spawnX=Math.floor(Math.random()*65)-32,spawnZ=Math.floor(Math.random()*65)-32;player.x=spawnX;player.z=spawnZ;player.y=heightAt(spawnX,spawnZ)+2;health=20;hunger=20;xp=0;level=0;for(const t of blockTypes)inventory[t]=0;inventory.food=0;creative=false;document.getElementById('mode').textContent='Survival';lastChunkX=Infinity;lastChunkZ=Infinity;
+ let spawnX,spawnZ;do{spawnX=Math.floor(Math.random()*65)-32;spawnZ=Math.floor(Math.random()*65)-32;}while((spawnX>=4&&spawnX<=18&&spawnZ>=-19&&spawnZ<=-3)||(spawnX>=-13&&spawnX<=-6&&spawnZ>=-7&&spawnZ<=1));player.x=spawnX;player.z=spawnZ;player.y=heightAt(spawnX,spawnZ)+2;health=20;hunger=20;xp=0;level=0;for(const t of blockTypes)inventory[t]=0;inventory.food=0;creative=false;document.getElementById('mode').textContent='Survival';lastChunkX=Infinity;lastChunkZ=Infinity;
  updateChunks(true);
  // Clear a small safe landing area so each new world starts in an open spot.
  for(let sx=spawnX-1;sx<=spawnX+1;sx++)for(let sz=spawnZ-1;sz<=spawnZ+1;sz++)for(let sy=heightAt(sx,sz)+1;sy<=heightAt(sx,sz)+4;sy++){const sk=key(sx,sy,sz);if(blocks.has(sk)){blocks.delete(sk);worldEdits.set(sk,null);}}
