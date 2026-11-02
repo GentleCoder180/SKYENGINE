@@ -329,7 +329,7 @@ function generate(){
  for(let sx=spawnX-1;sx<=spawnX+1;sx++)for(let sz=spawnZ-1;sz<=spawnZ+1;sz++)for(let sy=heightAt(sx,sz)+1;sy<=heightAt(sx,sz)+4;sy++){const sk=key(sx,sy,sz);if(blocks.has(sk)){blocks.delete(sk);worldEdits.set(sk,null);}}
  buildVillageAndMine();preserveVillage();spawnAnimals();syncRender();updateStats();
 }
-function updateStats(){document.getElementById('stats').innerHTML='WORLD: Endless Meadow<br>♥ '+health+'/20　🍗 '+hunger+'/20　🍎 '+(inventory.food||0)+'　✨ Lv '+level+' ('+xp+' XP)<br>BLOCKS: '+placed+' placed';document.getElementById('inventory').textContent=blockTypes.map(t=>icons[t]+' '+(creative?'∞':inventory[t])).join('　')}
+function updateStats(){buildHotbar();document.getElementById('stats').innerHTML='WORLD: Endless Meadow<br>♥ '+health+'/20　🍗 '+hunger+'/20　🍎 '+(inventory.food||0)+'　✨ Lv '+level+' ('+xp+' XP)<br>BLOCKS: '+placed+' placed';document.getElementById('inventory').textContent=blockTypes.map(t=>icons[t]+' '+(creative?'∞':inventory[t])).join('　')}
 function save(){const data={edits:[...worldEdits.entries()],player,selected,inventory,creative,health,hunger,xp,level};try{localStorage.setItem('skyblocks-world',JSON.stringify(data))}catch(e){toast('Could not save in this browser')}}
 function load(){try{const d=JSON.parse(localStorage.getItem('skyblocks-world'));if(!d?.edits)return false;worldEdits.clear();for(const [k,v] of d.edits)worldEdits.set(k,v);Object.assign(player,d.player||{});selected=d.selected||'grass';if(d.inventory)Object.assign(inventory,d.inventory);creative=d.creative??false;health=d.health??20;hunger=d.hunger??20;xp=d.xp??0;level=d.level??0;lastChunkX=Infinity;lastChunkZ=Infinity;updateChunks(true);if(player.x===undefined||player.z===undefined){player.x=0;player.z=7;player.y=heightAt(0,7)+2}buildVillageAndMine();for(const [k,v] of worldEdits){if(v===null)blocks.delete(k);else blocks.set(k,v)}spawnAnimals();syncRender();document.getElementById('mode').textContent=creative?'Creative':'Survival';updateStats();return true}catch(e){return false}}
 function spawnAnimals(){
@@ -373,8 +373,8 @@ function updateXPOrbs(dt){
 }
 function toast(s){const el=document.getElementById('toast');el.textContent=s;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),1700)}
 const hotbarKeys=['1','2','3','4','5','6','7','8','9','0','-','=','[',']'];
-function buildHotbar(){const bar=document.getElementById('hotbar');bar.innerHTML='';blockTypes.forEach((t,i)=>{const b=document.createElement('button');b.className='slot'+(t===selected?' active':'');b.innerHTML='<small>'+(hotbarKeys[i]||'')+'</small>'+icons[t];b.title=t+' ('+(hotbarKeys[i]||'click')+')';b.onclick=()=>select(t);bar.appendChild(b)})}
-function select(t){selected=t;buildHotbar();toast(t[0].toUpperCase()+t.slice(1)+' selected')}
+function buildHotbar(){const bar=document.getElementById('hotbar');bar.innerHTML='';blockTypes.forEach((t,i)=>{const owned=creative||(inventory[t]||0)>0;const b=document.createElement('button');b.className='slot'+(owned&&t===selected?' active':'')+(owned?'':' empty');b.innerHTML='<small>'+(hotbarKeys[i]||'')+'</small>'+(owned?icons[t]:'');b.title=owned?t+' ('+(hotbarKeys[i]||'click')+')':'Empty slot';b.disabled=!owned;b.onclick=()=>select(t);bar.appendChild(b)})}
+function select(t){if(!creative&&(inventory[t]||0)<=0){toast('Empty slot — mine '+t+' first!');return}selected=t;buildHotbar();toast(t[0].toUpperCase()+t.slice(1)+' selected')}
 const recipes=[
  {name:'Crafting Table',icon:'🪚',size:2,cost:{wood:4},out:'crafting_table',amount:1},
  {name:'Glass ×2',icon:'🔹',size:2,cost:{sand:2},out:'glass',amount:2},
