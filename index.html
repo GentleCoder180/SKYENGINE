@@ -197,7 +197,7 @@ const mats={
 };
 heldBlock.material=mats.grass[2];
 const blockTypes=['grass','dirt','stone','wood','leaves','brick','sand','glass','coal','iron','gold','diamond','wool','crafting_table'];
-const mineSeconds={grass:2,dirt:2,sand:1,leaves:1,wood:5,brick:12,stone:60,coal:60,iron:60,gold:60,diamond:60,glass:3,wool:2,crafting_table:5};
+const mineSeconds={grass:.35,dirt:.45,sand:.25,leaves:.2,wood:1.5,brick:2,stone:3,coal:3,iron:3.5,gold:4,diamond:4.5,glass:.5,wool:.4,crafting_table:1.5};
 let mining=null;const mineStatus=document.getElementById('mineStatus');
 const toolsList=[{name:'Hand',icon:'✋',power:1},{name:'Wood Pickaxe',icon:'🪓',power:2},{name:'Stone Pickaxe',icon:'⛏',power:4},{name:'Iron Pickaxe',icon:'⚒',power:8},{name:'Diamond Pickaxe',icon:'💎',power:20}];let toolIndex=0;
 function cycleTool(){toolIndex=(toolIndex+1)%toolsList.length;const t=toolsList[toolIndex];document.getElementById('tool').textContent=t.icon+' '+t.name;toast(t.name+' selected');}const icons={grass:'🟩',dirt:'🟫',stone:'⬜',wood:'🪵',leaves:'🌿',brick:'🧱',sand:'🟨',glass:'🔹',coal:'⚫',iron:'🔩',gold:'🟡',diamond:'💎',wool:'🧶',crafting_table:'🪚'};
