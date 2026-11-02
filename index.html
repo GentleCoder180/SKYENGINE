@@ -186,7 +186,7 @@ const mats={
  leaves:new THREE.MeshLambertMaterial({map:pixelTexture('#258b35','#145524','leaves')}),
  sand:new THREE.MeshLambertMaterial({map:pixelTexture('#e5cc7c','#b99a4d','sand')}),
  brick:new THREE.MeshLambertMaterial({map:pixelTexture('#bd5540','#753b32','brick')}),
- glass:new THREE.MeshLambertMaterial({color:0x9ce8f5,transparent:true,opacity:.78,depthWrite:true}),
+ glass:new THREE.MeshLambertMaterial({color:0x9ce8f5}),
  wool:new THREE.MeshLambertMaterial({map:pixelTexture('#f1eee5','#b8b2a7','wool')}),
  crafting_table:new THREE.MeshLambertMaterial({map:pixelTexture('#9a6338','#e2b36c','wood')}),
  flower:new THREE.MeshLambertMaterial({color:0xf3a6cb}),
@@ -372,7 +372,8 @@ function updateXPOrbs(dt){
  }
 }
 function toast(s){const el=document.getElementById('toast');el.textContent=s;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),1700)}
-function buildHotbar(){const bar=document.getElementById('hotbar');bar.innerHTML='';blockTypes.forEach((t,i)=>{const b=document.createElement('button');b.className='slot'+(t===selected?' active':'');b.innerHTML='<small>'+(i+1)+'</small>'+icons[t];b.title=t;b.onclick=()=>select(t);bar.appendChild(b)})}
+const hotbarKeys=['1','2','3','4','5','6','7','8','9','0','-','=','[',']'];
+function buildHotbar(){const bar=document.getElementById('hotbar');bar.innerHTML='';blockTypes.forEach((t,i)=>{const b=document.createElement('button');b.className='slot'+(t===selected?' active':'');b.innerHTML='<small>'+(hotbarKeys[i]||'')+'</small>'+icons[t];b.title=t+' ('+(hotbarKeys[i]||'click')+')';b.onclick=()=>select(t);bar.appendChild(b)})}
 function select(t){selected=t;buildHotbar();toast(t[0].toUpperCase()+t.slice(1)+' selected')}
 const recipes=[
  {name:'Crafting Table',icon:'🪚',size:2,cost:{wood:4},out:'crafting_table',amount:1},
@@ -410,8 +411,8 @@ document.getElementById('newWorld').onclick=()=>{generate();localStorage.removeI
 document.getElementById('pause').onclick=pause;
 document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===renderer.domElement});
 document.addEventListener('mousemove',e=>{if(!locked||paused)return;yaw-=e.movementX*.0022;pitch-=e.movementY*.0022;pitch=Math.max(-1.45,Math.min(1.45,pitch))});
-document.addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat)jumpQueued=true;keys[e.code]=true;if(/^Digit[1-8]$/.test(e.code))select(blockTypes[Number(e.code.slice(5))-1]);if(e.code==='Escape'&&started)pause();if(e.code==='KeyC'&&!paused)toggleCraft();if(e.code==='KeyT'&&!paused)cycleTool();if(e.code==='KeyE'&&!paused){if((inventory.food||0)>0&&hunger<20){inventory.food--;hunger=Math.min(20,hunger+6);updateStats();save();toast('🍎 Ate an apple — hunger restored')}else toast(inventory.food?'Hunger is already full':'No apples — mine leaves to find food')}});
-document.addEventListener('keyup',e=>keys[e.code]=false);
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat)jumpQueued=true;keys[e.code]=true;const hotbarIndex=({Digit1:0,Digit2:1,Digit3:2,Digit4:3,Digit5:4,Digit6:5,Digit7:6,Digit8:7,Digit9:8,Digit0:9,Minus:10,Equal:11,BracketLeft:12,BracketRight:13})[e.code];if(hotbarIndex!==undefined&&blockTypes[hotbarIndex])select(blockTypes[hotbarIndex]);if(e.code==='Escape'&&started)pause();if(e.code==='KeyC'&&!paused)toggleCraft();if(e.code==='KeyT'&&!paused)cycleTool();if(e.code==='KeyE'&&!paused){if((inventory.food||0)>0&&hunger<20){inventory.food--;hunger=Math.min(20,hunger+6);updateStats();save();toast('🍎 Ate an apple — hunger restored')}else toast(inventory.food?'Hunger is already full':'No apples — mine leaves to find food')}});
+document.addEventListener('keyup',e=>{keys[e.code]=false;if(e.code==='Space')jumpQueued=false});
 renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
 function targetBlock(){camera.rotation.set(pitch,yaw,0,'YXZ');ray.setFromCamera(new THREE.Vector2(0,0),camera);const hit=ray.intersectObjects([...meshes.values()],false)[0];if(!hit){targetOutline.visible=false;return null}const k=instanceKeys.get(hit.object.userData.type)?.[hit.instanceId];if(!k){targetOutline.visible=false;return null}const [x,y,z]=k.split(',').map(Number);hit.block={x,y,z,type:hit.object.userData.type};targetOutline.position.set(x,y,z);targetOutline.visible=true;return hit}
 function startMining(){ray.setFromCamera(new THREE.Vector2(0,0),camera);const animalHit=ray.intersectObjects(animals.filter(a=>a.kind==='sheep'&&!a.sheared).map(a=>a.group),true)[0];if(animalHit){const animal=animals.find(a=>a.group===animalHit.object||a.group===animalHit.object.parent||a.group===animalHit.object.parent?.parent);if(animal&&!animal.sheared){animal.sheared=true;animal.group.children.forEach(part=>{part.material=new THREE.MeshLambertMaterial({color:0x8b8174})});inventory.wool=(inventory.wool||0)+1;toast('✂️ Sheep sheared! +1 wool');updateStats();save()}return}const hit=targetBlock();if(!hit)return;const p=hit.block;if(p.y<=-6){toast('Bedrock is unbreakable!');return}mining={key:key(p.x,p.y,p.z),elapsed:0};}
