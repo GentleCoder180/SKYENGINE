@@ -277,9 +277,10 @@ function generateChunk(cx,cz){
  const minX=cx*CHUNK_SIZE,minZ=cz*CHUNK_SIZE;
  for(let x=minX;x<minX+CHUNK_SIZE;x++)for(let z=minZ;z<minZ+CHUNK_SIZE;z++){
   const h=heightAt(x,z);
+  const biome=surfaceBiome(x,z);
   for(let y=-6;y<=h;y++){
    if(y===-6){addBlock(x,y,z,'bedrock',false);continue;}
-   const biome=surfaceBiome(x,z);let t=y===h?(biome==='desert'?'sand':biome==='rocky'?'stone':'grass'):y>h-3?(biome==='desert'?'sand':biome==='rocky'?'stone':'dirt'):'stone';
+   let t=y===h?(biome==='desert'?'sand':biome==='rocky'?'stone':'grass'):y>h-3?(biome==='desert'?'sand':biome==='rocky'?'stone':'dirt'):'stone';
    const caveField=Math.sin(x*.16+y*.31)*Math.cos(z*.17-y*.27)+Math.sin((x-z)*.11+y*.19)*.55;
    // Smooth 3D cave pockets and winding tunnels below the surface.
    if(y<h-3&&y>-6&&caveField>.95)continue;
