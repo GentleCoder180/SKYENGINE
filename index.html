@@ -278,7 +278,7 @@ function generateChunk(cx,cz){
   for(let y=-6;y<=h;y++){
    if(y===-6){addBlock(x,y,z,'bedrock',false);continue;}
    let t=y===h?'grass':y>h-3?'dirt':'stone';
-   if(y<-2&&Math.sin(x*1.7+y*2.3+z*.8)*Math.cos(z*1.2-y*.7)>.72)continue;
+   const caveField=Math.sin(x*.16+y*.31)*Math.cos(z*.17-y*.27)+Math.sin((x-z)*.11+y*.19)*.55;\n   // Smooth 3D cave pockets and winding tunnels below the surface.\n   if(y<h-3&&y>-6&&caveField>.95)continue;\n   if(y<-2&&Math.sin(x*1.7+y*2.3+z*.8)*Math.cos(z*1.2-y*.7)>.72)continue;
    if(y<-2&&Math.abs(Math.sin(x*2.7+z*1.3+y*3.1))>.91)t='coal';
    if(y<-3&&Math.abs(Math.sin(x*1.3-z*2.1+y*2.4))>.94)t='iron';
    if(y<-4&&Math.abs(Math.sin(x*.9+z*1.8-y*2.2))>.975)t='gold';
@@ -317,8 +317,8 @@ function updateChunks(force=false){
 }
 function generate(){
  blocks.clear();meshes.clear();loadedChunks.clear();worldEdits.clear();animals.forEach(a=>scene.remove(a.group));animals=[];placed=0;
- player.x=0;player.z=7;player.y=heightAt(0,7)+2;health=20;hunger=20;xp=0;level=0;for(const t of blockTypes)inventory[t]=0;inventory.food=0;creative=false;document.getElementById('mode').textContent='Survival';lastChunkX=Infinity;lastChunkZ=Infinity;
- updateChunks(true);buildVillageAndMine();preserveVillage();spawnAnimals();syncRender();updateStats();
+ const spawnX=Math.floor(Math.random()*65)-32,spawnZ=Math.floor(Math.random()*65)-32;player.x=spawnX;player.z=spawnZ;player.y=heightAt(spawnX,spawnZ)+2;health=20;hunger=20;xp=0;level=0;for(const t of blockTypes)inventory[t]=0;inventory.food=0;creative=false;document.getElementById('mode').textContent='Survival';lastChunkX=Infinity;lastChunkZ=Infinity;
+ updateChunks(true);\n // Clear a small safe landing area so each new world starts in an open spot.\n for(let sx=spawnX-1;sx<=spawnX+1;sx++)for(let sz=spawnZ-1;sz<=spawnZ+1;sz++)for(let sy=heightAt(sx,sz)+1;sy<=heightAt(sx,sz)+4;sy++){const sk=key(sx,sy,sz);if(blocks.has(sk)){blocks.delete(sk);worldEdits.set(sk,null);}}\n buildVillageAndMine();preserveVillage();spawnAnimals();syncRender();updateStats();
 }
 function updateStats(){document.getElementById('stats').innerHTML='WORLD: Endless Meadow<br>♥ '+health+'/20　🍗 '+hunger+'/20　🍎 '+(inventory.food||0)+'　✨ Lv '+level+' ('+xp+' XP)<br>BLOCKS: '+placed+' placed';document.getElementById('inventory').textContent=blockTypes.slice(0,8).map(t=>icons[t]+' '+(creative?'∞':inventory[t])).join('　')}
 function save(){const data={edits:[...worldEdits.entries()],player,selected,inventory,creative,health,hunger,xp,level};try{localStorage.setItem('skyblocks-world',JSON.stringify(data))}catch(e){toast('Could not save in this browser')}}
