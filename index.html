@@ -279,7 +279,7 @@ function generateChunk(cx,cz){
   const h=heightAt(x,z);
   for(let y=-6;y<=h;y++){
    if(y===-6){addBlock(x,y,z,'bedrock',false);continue;}
-   const biome=surfaceBiome(x,z);let t=y===h?(biome==='desert'?'sand':'grass'):y>h-3?(biome==='desert'?'sand':'dirt'):'stone';
+   const biome=surfaceBiome(x,z);let t=y===h?(biome==='desert'?'sand':biome==='rocky'?'stone':'grass'):y>h-3?(biome==='desert'?'sand':biome==='rocky'?'stone':'dirt'):'stone';
    const caveField=Math.sin(x*.16+y*.31)*Math.cos(z*.17-y*.27)+Math.sin((x-z)*.11+y*.19)*.55;
    // Smooth 3D cave pockets and winding tunnels below the surface.
    if(y<h-3&&y>-6&&caveField>.95)continue;
@@ -292,7 +292,7 @@ function generateChunk(cx,cz){
   }
   // Deterministic trees: the same coordinates always produce the same forest.
   const treeSeed=Math.abs(Math.sin(x*127.1+z*311.7)*43758.5453)%1;
-  if(treeSeed>.982&&Math.hypot(x,z)>5)tree(x,z);
+  if(treeSeed>.982&&Math.hypot(x,z)>5&&biome==='meadow')tree(x,z);
   if(Math.abs(Math.sin(x*17.13+z*41.7)*10000)%1>.994){
    const flowerY=heightAt(x,z)+1;addBlock(x,flowerY,z,'flower',false);
   }
@@ -328,7 +328,7 @@ function generate(){
  for(let sx=spawnX-1;sx<=spawnX+1;sx++)for(let sz=spawnZ-1;sz<=spawnZ+1;sz++)for(let sy=heightAt(sx,sz)+1;sy<=heightAt(sx,sz)+4;sy++){const sk=key(sx,sy,sz);if(blocks.has(sk)){blocks.delete(sk);worldEdits.set(sk,null);}}
  buildVillageAndMine();preserveVillage();spawnAnimals();syncRender();updateStats();
 }
-function updateStats(){document.getElementById('stats').innerHTML='WORLD: Endless Meadow<br>♥ '+health+'/20　🍗 '+hunger+'/20　🍎 '+(inventory.food||0)+'　✨ Lv '+level+' ('+xp+' XP)<br>BLOCKS: '+placed+' placed';document.getElementById('inventory').textContent=blockTypes.slice(0,8).map(t=>icons[t]+' '+(creative?'∞':inventory[t])).join('　')}
+function updateStats(){document.getElementById('stats').innerHTML='WORLD: Endless Meadow<br>♥ '+health+'/20　🍗 '+hunger+'/20　🍎 '+(inventory.food||0)+'　✨ Lv '+level+' ('+xp+' XP)<br>BLOCKS: '+placed+' placed';document.getElementById('inventory').textContent=blockTypes.map(t=>icons[t]+' '+(creative?'∞':inventory[t])).join('　')}
 function save(){const data={edits:[...worldEdits.entries()],player,selected,inventory,creative,health,hunger,xp,level};try{localStorage.setItem('skyblocks-world',JSON.stringify(data))}catch(e){toast('Could not save in this browser')}}
 function load(){try{const d=JSON.parse(localStorage.getItem('skyblocks-world'));if(!d?.edits)return false;worldEdits.clear();for(const [k,v] of d.edits)worldEdits.set(k,v);Object.assign(player,d.player||{});selected=d.selected||'grass';if(d.inventory)Object.assign(inventory,d.inventory);creative=d.creative??false;health=d.health??20;hunger=d.hunger??20;xp=d.xp??0;level=d.level??0;lastChunkX=Infinity;lastChunkZ=Infinity;updateChunks(true);if(player.x===undefined||player.z===undefined){player.x=0;player.z=7;player.y=heightAt(0,7)+2}buildVillageAndMine();for(const [k,v] of worldEdits){if(v===null)blocks.delete(k);else blocks.set(k,v)}spawnAnimals();syncRender();document.getElementById('mode').textContent=creative?'Creative':'Survival';updateStats();return true}catch(e){return false}}
 function spawnAnimals(){
