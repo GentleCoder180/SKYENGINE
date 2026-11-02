@@ -452,10 +452,8 @@ function moveAxis(axis,amount){
  for(let i=0;i<steps;i++){
   const nx=player.x+(axis==='x'?step:0),nz=player.z+(axis==='z'?step:0);
   if(!bodyCollides(nx,player.y,nz)){player.x=nx;player.z=nz;continue;}
-  // Minecraft-style auto-step: climb a single-block ledge while grounded.
-  if(onGround&&!bodyCollides(nx,player.y+1,nz)){
-   player.y+=1;player.x=nx;player.z=nz;velocityY=0;continue;
-  }
+  // Solid blocks, including glass, stop horizontal movement.
+  // Do not auto-step over a one-block wall; jumping must be intentional.
   break;
  }
 }
