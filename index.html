@@ -126,7 +126,7 @@ document.getElementById('videoForm').addEventListener('submit',e=>{
  document.getElementById('videoFrame').src='https://www.youtube-nocookie.com/embed/'+id;
 });
 const mount=document.getElementById('game');
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x8ed0f2);scene.fog=new THREE.Fog(0x8ed0f2,24,75);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x8ed0f2);scene.fog=new THREE.Fog(0x8ed0f2,18,48);
 const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,160);
 scene.add(camera);
 const viewArm=new THREE.Group();
@@ -226,6 +226,14 @@ function syncRender(){
    });
    continue;
   }
+  if(type==='flower'){
+   entries.forEach(([k,x,y,z])=>{
+    const bloom=new THREE.Mesh(new THREE.OctahedronGeometry(.22,0),mats.flower);
+    bloom.position.set(x,y+.2,z);bloom.userData.type='flower';bloom.userData.blockKey=k;
+    scene.add(bloom);meshes.set('flower:'+k,bloom);
+   });
+   continue;
+  }
   const inst=new THREE.InstancedMesh(geo,mats[type]||mats.grass,entries.length);
   const ids=[];
   entries.forEach(([k,x,y,z],i)=>{dummy.position.set(x,y,z);dummy.updateMatrix();inst.setMatrixAt(i,dummy.matrix);ids.push(k)});
@@ -280,7 +288,7 @@ function buildVillageAndMine(){
  addBlock(mx-2,top+2,mz+1,'wood',false);addBlock(mx+1,top+2,mz+1,'wood',false);
  for(let y=top;y>top-4;y--){addBlock(mx-2,y,mz-2,'wood',false);addBlock(mx+1,y,mz-2,'wood',false)}
 }
-const CHUNK_SIZE=16,CHUNK_RADIUS=2,loadedChunks=new Set(); // Infinite terrain streams in around the player.
+const CHUNK_SIZE=16,CHUNK_RADIUS=1,loadedChunks=new Set(); // Infinite terrain streams in around the player.
 let lastChunkX=Infinity,lastChunkZ=Infinity;
 function chunkId(cx,cz){return cx+','+cz}
 function generateChunk(cx,cz){
@@ -324,7 +332,7 @@ function updateChunks(force=false){
  // Keep a moving window loaded so exploration stays smooth on ordinary computers.
  for(const id of [...loadedChunks]){
   const [x,z]=id.split(',').map(Number);
-  if(Math.abs(x-cx)>CHUNK_RADIUS+1||Math.abs(z-cz)>CHUNK_RADIUS+1){
+  if(Math.abs(x-cx)>CHUNK_RADIUS||Math.abs(z-cz)>CHUNK_RADIUS){
    const minX=x*CHUNK_SIZE,minZ=z*CHUNK_SIZE;
    for(const k of [...blocks.keys()]){const [bx,,bz]=k.split(',').map(Number);if(bx>=minX&&bx<minX+CHUNK_SIZE&&bz>=minZ&&bz<minZ+CHUNK_SIZE)blocks.delete(k)}
    loadedChunks.delete(id);changed=true;
@@ -383,8 +391,8 @@ function updateXPOrbs(dt){
  }
 }
 function toast(s){const el=document.getElementById('toast');el.textContent=s;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),1700)}
-const hotbarKeys=['1','2','3','4','5','6','7','8','9','0','-','=','[',']'];
-function buildHotbar(){const bar=document.getElementById('hotbar');bar.innerHTML='';blockTypes.forEach((t,i)=>{const owned=creative||(inventory[t]||0)>0;const b=document.createElement('button');b.className='slot'+(owned&&t===selected?' active':'')+(owned?'':' empty');b.innerHTML='<small>'+(hotbarKeys[i]||'')+'</small>'+(owned?icons[t]:'');b.title=owned?t+' ('+(hotbarKeys[i]||'click')+')':'Empty slot';b.disabled=!owned;b.onclick=()=>select(t);bar.appendChild(b)})}
+const hotbarKeys=['1','2','3','4','5','6','7','8','9'];
+function buildHotbar(){const bar=document.getElementById('hotbar');bar.innerHTML='';blockTypes.forEach((t,i)=>{const owned=creative||(inventory[t]||0)>0;const b=document.createElement('button');b.className='slot'+(owned&&t===selected?' active':'')+(owned?'':' empty');b.innerHTML='<small>'+(hotbarKeys[i]||'CLICK')+'</small>'+(owned?icons[t]:'');b.title=owned?t+' ('+(hotbarKeys[i]||'click')+')':'Empty slot';b.disabled=!owned;b.onclick=()=>select(t);bar.appendChild(b)})}
 function select(t){if(!creative&&(inventory[t]||0)<=0){toast('Empty slot — mine '+t+' first!');return}selected=t;buildHotbar();toast(t[0].toUpperCase()+t.slice(1)+' selected')}
 const recipes=[
  {name:'Crafting Table',icon:'🪚',size:2,cost:{wood:4},out:'crafting_table',amount:1},
@@ -422,7 +430,7 @@ document.getElementById('newWorld').onclick=()=>{generate();localStorage.removeI
 document.getElementById('pause').onclick=pause;
 document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===renderer.domElement});
 document.addEventListener('mousemove',e=>{if(!locked||paused)return;yaw-=e.movementX*.0022;pitch-=e.movementY*.0022;pitch=Math.max(-1.45,Math.min(1.45,pitch))});
-document.addEventListener('keydown',e=>{if(e.code==='Space')jumpHeld=true;keys[e.code]=true;const hotbarIndex=({Digit1:0,Digit2:1,Digit3:2,Digit4:3,Digit5:4,Digit6:5,Digit7:6,Digit8:7,Digit9:8,Digit0:9,Minus:10,Equal:11,BracketLeft:12,BracketRight:13})[e.code];if(hotbarIndex!==undefined&&blockTypes[hotbarIndex])select(blockTypes[hotbarIndex]);if(e.code==='Escape'&&started)pause();if(e.code==='KeyC'&&!paused)toggleCraft();if(e.code==='KeyT'&&!paused)cycleTool();if(e.code==='KeyE'&&!paused){if((inventory.food||0)>0&&hunger<20){inventory.food--;hunger=Math.min(20,hunger+6);updateStats();save();toast('🍎 Ate an apple — hunger restored')}else toast(inventory.food?'Hunger is already full':'No apples — mine leaves to find food')}});
+document.addEventListener('keydown',e=>{if(e.code==='Space')jumpHeld=true;keys[e.code]=true;const hotbarIndex=({Digit1:0,Digit2:1,Digit3:2,Digit4:3,Digit5:4,Digit6:5,Digit7:6,Digit8:7,Digit9:8})[e.code];if(hotbarIndex!==undefined&&blockTypes[hotbarIndex])select(blockTypes[hotbarIndex]);if(e.code==='Escape'&&started)pause();if(e.code==='KeyC'&&!paused)toggleCraft();if(e.code==='KeyT'&&!paused)cycleTool();if(e.code==='KeyE'&&!paused){if((inventory.food||0)>0&&hunger<20){inventory.food--;hunger=Math.min(20,hunger+6);updateStats();save();toast('🍎 Ate an apple — hunger restored')}else toast(inventory.food?'Hunger is already full':'No apples — mine leaves to find food')}});
 document.addEventListener('keyup',e=>{keys[e.code]=false;if(e.code==='Space')jumpHeld=false});
 // Clear held inputs if the browser tab loses focus, preventing stuck jump input.
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false;jumpHeld=false});
@@ -443,7 +451,7 @@ function bodyCollides(x,eyeY,z){
  const minZ=Math.floor(z-PLAYER_RADIUS+.5),maxZ=Math.floor(z+PLAYER_RADIUS+.5);
  const minY=Math.floor(eyeY-PLAYER_BOTTOM+.5),maxY=Math.floor(eyeY+PLAYER_TOP+.5);
  for(let bx=minX;bx<=maxX;bx++)for(let bz=minZ;bz<=maxZ;bz++)for(let by=minY;by<=maxY;by++){
-  if(blocks.has(key(bx,by,bz)))return true;
+  if(blocks.has(key(bx,by,bz))&&blocks.get(key(bx,by,bz))!=='flower')return true;
  }
  return false;
 }
