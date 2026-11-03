@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#101a2b">
+<meta name="description" content="Explore an endless voxel world, gather resources, and build your own shelter in SKYENGINE.">
+<script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
+<title>SKYENGINE — Infinite Voxel World</title>
+<style>
+:root{color-scheme:dark;--panel:rgba(12,20,34,.88);--line:rgba(255,255,255,.14);--accent:#69d4ff}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#83c9ee;color:#fff;font-family:Inter,system-ui,Segoe UI,Arial,sans-serif}canvas{display:block}
+#game{position:fixed;inset:0}#hud{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:18px}
+.panel{background:var(--panel);border:1px solid var(--line);box-shadow:0 12px 35px #0003;backdrop-filter:blur(12px);border-radius:15px}
+#top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.brand{padding:11px 15px;font-weight:900;letter-spacing:.4px}.brand b{color:var(--accent)}.stats{padding:10px 13px;color:#d9e9fa;font-size:12px;line-height:1.7;text-align:right}
+#crosshair{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:26px;font-weight:300;text-shadow:0 1px 4px #000;opacity:.9}
+#bottom{display:flex;flex-direction:column;align-items:center;gap:10px}.tips{padding:8px 13px;font-size:12px;color:#dceafa;text-align:center}#inventory{max-width:95vw;white-space:normal;line-height:1.6}.hotbar{display:flex;gap:7px;padding:8px;background:var(--panel);border:1px solid var(--line);border-radius:15px;pointer-events:auto}
+.slot{width:55px;height:55px;border:2px solid #ffffff30;border-radius:9px;background:#ffffff12;color:#fff;display:grid;place-items:center;position:relative;cursor:pointer;font-size:24px}.slot small{position:absolute;left:5px;top:2px;font-size:10px;color:#d9e9fa}.slot.active{border-color:#fff;box-shadow:0 0 0 2px var(--accent),0 0 18px #69d4ff77;background:#ffffff25}
+button{font:inherit}#menu{position:fixed;inset:0;display:grid;place-items:center;background:linear-gradient(135deg,#071426bb,#0d2344aa);z-index:5;padding:18px}#menu.hidden{display:none}.menu-card{width:min(510px,100%);padding:30px;text-align:center}.logo{font-size:clamp(36px,8vw,62px);font-weight:1000;letter-spacing:-3px;margin:0}.logo span{color:var(--accent)}.tagline{color:#b8cbe0;margin:5px 0 24px}.primary,.secondary{border:0;border-radius:11px;padding:13px 20px;cursor:pointer;font-weight:800}.primary{background:linear-gradient(135deg,#49c8ff,#287fe9);color:#071426;box-shadow:0 8px 22px #168bd055}.secondary{background:#ffffff13;border:1px solid var(--line);color:#fff}.actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}.instructions{margin:22px 0 0;text-align:left;color:#d3e1f1;font-size:13px;line-height:1.9}.instructions b{color:#fff}
+#mineStatus{position:fixed;left:50%;top:calc(50% + 28px);transform:translateX(-50%);padding:7px 12px;border-radius:9px;background:#101a2beF;border:1px solid #ffffff40;font-size:12px;display:none;pointer-events:none;white-space:nowrap}#toast{position:fixed;left:50%;top:18%;transform:translate(-50%,-10px);background:#101a2beF;border:1px solid var(--line);padding:10px 15px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none;font-size:13px}#toast.show{opacity:1;transform:translate(-50%,0)}
+#pause{position:fixed;right:18px;top:75px;pointer-events:auto;background:var(--panel);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer}
+#mobile{display:none;position:fixed;bottom:112px;left:14px;gap:7px;pointer-events:auto}#mobile button{width:48px;height:48px;border-radius:12px;border:1px solid #fff5;background:#101a2bcc;color:white;font-size:18px}
+#videoLoungeBtn{position:fixed;right:18px;top:255px;pointer-events:auto;background:var(--panel);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;z-index:3}
+#videoLounge{display:none;position:fixed;inset:0;z-index:8;background:#06101ddd;place-items:center;padding:16px}
+#videoLounge.open{display:grid}.video-card{width:min(850px,100%);padding:18px}.video-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.video-head h2{margin:0;font-size:22px}.video-form{display:flex;gap:8px;margin:14px 0}.video-form input{min-width:0;flex:1;background:#081426;border:1px solid var(--line);border-radius:9px;color:white;padding:11px}.video-frame{width:100%;aspect-ratio:16/9;background:#000;border:1px solid var(--line);border-radius:10px}.video-note{font-size:12px;color:#b8cbe0;line-height:1.5;margin:10px 0 0}
+@media(max-width:650px){#videoLoungeBtn{right:10px;top:300px}.video-form{flex-wrap:wrap}.video-head h2{font-size:18px}}
+@media(max-width:650px){#hud{padding:10px}.stats{font-size:10px}.slot{width:43px;height:47px;font-size:19px}.hotbar{gap:4px;padding:6px}.tips{font-size:10px}#mobile{display:grid;grid-template-columns:repeat(3,48px)}.brand{font-size:13px}}
+
+#menu{display:none}#menu.show{display:grid}#menu.show.hidden{display:none}#modeSelect{position:fixed;inset:0;z-index:15;display:none;place-items:center;padding:18px;background:linear-gradient(135deg,#071426ee,#0d2344ee)}#modeSelect .menu-card{width:min(510px,100%);padding:30px;text-align:center}#multiplayerInfo{position:fixed;inset:0;z-index:16;display:none;place-items:center;padding:18px;background:linear-gradient(135deg,#071426ee,#0d2344ee)}#multiplayerInfo .menu-card{width:min(510px,100%);padding:30px;text-align:center}#loginGate{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:18px;background:linear-gradient(135deg,#071426ee,#0d2344ee)}#loginGate .login-card{width:min(390px,100%);padding:28px;text-align:center}#loginGate input{display:block;width:100%;margin:10px 0;padding:13px;border-radius:9px;border:1px solid var(--line);background:#081426;color:#fff;font:inherit}#loginError{min-height:20px;color:#ff9292;font-size:13px}.auth-tabs{display:flex;gap:8px;margin:18px 0 10px}.auth-tabs button{flex:1}.auth-tabs button.active{background:linear-gradient(135deg,#49c8ff,#287fe9);color:#071426;border-color:transparent}.auth-submit{width:100%;margin-top:8px}
+
+/* Dedicated CrazyGames release presentation */
+body.cg-release{user-select:none;-webkit-user-select:none;touch-action:pan-x pan-y}
+body.cg-release #loginGate,body.cg-release #modeSelect,body.cg-release #multiplayerInfo,body.cg-release #adminPanel,body.cg-release #videoLoungeBtn,body.cg-release #videoLounge{display:none!important}
+body.cg-release #menu{background:linear-gradient(135deg,#071426dd,#0d2344bb)}
+body.cg-release #menu .instructions{font-size:13px;line-height:1.65}
+#cgObjective{display:none;position:fixed;top:76px;left:50%;transform:translateX(-50%);z-index:4;max-width:min(92vw,620px);padding:10px 15px;border:1px solid #ffffff35;border-radius:12px;background:#081426dd;color:#fff;text-align:center;font-size:13px;line-height:1.45;pointer-events:none;box-shadow:0 8px 28px #0004}
+@media(max-width:650px){#cgObjective{top:62px;font-size:11px;padding:8px 10px;max-width:94vw}}
+</style>
+</head>
+<body class="cg-release">
+<div id="game"></div>
+<div id="hud">
+ <div id="top"><div class="panel brand">⛏ SKY<b>ENGINE</b></div><div class="panel stats" id="stats">WORLD: Infinite Meadow<br>♥ 20/20　🍗 20/20　XP 0<br>BLOCKS: 0 placed</div></div>
+ <div id="crosshair">+</div>
+ <div id="bottom"><div class="panel tips">WASD move · Shift sprint · Space jump · Gravity · Hold left click mine · Right click place · 1–8 select · T change tool · C craft · Dig deep for ores · Esc pause</div><div class="panel tips" id="inventory">🟩 64　🟫 64　⬜ 64　🪵 64　🌿 64　🧱 64</div><div class="hotbar" id="hotbar"></div></div>
+</div>
+<button id="pause">Ⅱ Pause</button><button id="craft" style="position:fixed;right:18px;top:165px;pointer-events:auto;background:var(--panel);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer">⚒ Craft</button><div id="craftPanel" class="panel" style="display:none;position:fixed;right:18px;top:210px;z-index:4;padding:14px;width:min(340px,calc(100vw - 36px));max-height:60vh;overflow:auto;pointer-events:auto"><b>CRAFTING</b><div id="craftGrid" style="display:grid;grid-template-columns:repeat(2,42px);gap:5px;margin:12px 0"></div><div id="craftSize" style="font-size:12px;color:#9edfff;margin-bottom:8px">2×2 PERSONAL CRAFTING</div><div id="craftRecipes" style="display:grid;gap:7px"></div><p style="font-size:11px;color:#9fb3ca">Place a crafting table nearby to unlock 3×3 recipes. Press C to close.</p></div><button id="tool" style="position:fixed;right:18px;top:210px;pointer-events:auto;background:var(--panel);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer">⛏ Hand</button><button id="mode" style="position:fixed;right:18px;top:120px;pointer-events:auto;background:var(--panel);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer">Creative</button>
+<div id="mobile"><button data-move="forward">↑</button><button data-move="jump">⤒</button><button data-move="left">←</button><button data-move="back">↓</button><button data-move="right">→</button></div>
+<div id="toast"></div><div id="mineStatus"></div><div id="cgObjective">GOAL: Build a shelter. Move with WASD or the touch pad · look around with the mouse or by dragging · mine and place blocks.</div>
+<button id="videoLoungeBtn">▶ Video Lounge</button>
+<div id="videoLounge">
+ <div class="panel video-card">
+  <div class="video-head"><h2>▶ SKYENGINE Video Lounge</h2><button class="secondary" id="closeVideoLounge">✕ Close</button></div>
+  <p class="video-note">Play a video your teacher has approved. Paste a YouTube video link or video ID below. This uses YouTube's normal embedded player; it does not bypass school network restrictions.</p>
+  <form class="video-form" id="videoForm"><input id="videoInput" type="text" placeholder="Paste YouTube video link or ID" aria-label="YouTube video link or ID"><button class="primary" type="submit">Load video</button></form>
+  <iframe class="video-frame" id="videoFrame" title="YouTube video player" src="about:blank" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+  <p class="video-note">If the player is blocked, ask your teacher or school IT team to approve YouTube or the specific educational video. Don't use proxy sites or unapproved mirrors.</p>
+ </div>
+</div>
+<div id="loginGate"><form class="panel login-card" id="loginForm"><h1 class="logo">SKY<span>ENGINE</span></h1><p class="tagline" id="authSubtitle">Log in to your account</p><div class="auth-tabs"><button class="secondary active" id="loginTab" type="button">LOG IN</button><button class="secondary" id="signInTab" type="button">SIGN IN</button></div><input id="loginName" autocomplete="username" placeholder="Account name" maxlength="24" required><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password (at least 6 characters)" minlength="6" required><div id="loginError" role="status"></div><button class="primary auth-submit" id="authSubmit" type="submit">LOG IN</button><p class="video-note">Accounts are saved only in this browser and are not protected by a secure online account server.</p></form></div>
+<div id="modeSelect"><div class="panel menu-card" style="width:min(1050px,100%);max-height:92vh;overflow:auto">
+ <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div style="text-align:left"><h1 class="logo">SKY<span>ENGINE</span></h1><p class="tagline">PLAY · CREATE · SHARE · BUILD WORLDS</p></div><button class="secondary" id="openAdmin">⚙ CREATOR ADMIN</button></div>
+ <div class="actions" style="margin:12px 0 18px"><button class="primary" id="joinMultiplayer">🌐 MULTIPLAYER</button><button class="secondary" id="singleplayer">⛏ PLAY YOUR WORLD</button><button class="secondary" id="openCreator">＋ CREATE & SUBMIT</button></div>
+ <h2 style="text-align:left;margin:12px 0 8px">DISCOVER GAMES</h2>
+ <div id="categoryChips" style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px"><button class="secondary" data-category="all">All</button><button class="secondary" data-category="adventure">Adventure</button><button class="secondary" data-category="survival">Survival</button><button class="secondary" data-category="creative">Creative</button><button class="secondary" data-category="parkour">Parkour</button><button class="secondary" data-category="minigames">Minigames</button><button class="secondary" data-category="roleplay">Roleplay</button><button class="secondary" data-category="puzzle">Puzzle</button><button class="secondary" data-category="racing">Racing</button><button class="secondary" data-category="other">Other</button></div>
+ <div id="catalogGames" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;text-align:left"><p class="video-note">Loading published games…</p></div>
+ <div id="creatorPanel" class="panel" style="display:none;text-align:left;padding:16px;margin-top:16px"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">CREATOR STUDIO</h2><button class="secondary" id="closeCreator">CLOSE</button></div><p class="video-note">Build a world or game, then send it to the Suggestions review queue. Only approved projects appear publicly.</p>
+ <form id="creatorForm" style="display:grid;gap:9px"><input id="creatorTitle" maxlength="40" required placeholder="Project title (3–40 characters)" style="padding:11px;border-radius:8px;background:#081426;color:white;border:1px solid var(--line)"><textarea id="creatorDescription" maxlength="500" required placeholder="Describe your world or game (at least 10 characters)" style="min-height:75px;padding:11px;border-radius:8px;background:#081426;color:white;border:1px solid var(--line)"></textarea><div style="display:flex;gap:8px;flex-wrap:wrap"><select id="creatorKind" style="padding:10px;background:#081426;color:white;border:1px solid var(--line);border-radius:8px"><option value="world">My own world</option><option value="game">A coded game</option></select><select id="creatorCategory" style="padding:10px;background:#081426;color:white;border:1px solid var(--line);border-radius:8px"><option value="adventure">Adventure</option><option value="survival">Survival</option><option value="creative">Creative</option><option value="parkour">Parkour</option><option value="minigames">Minigames</option><option value="roleplay">Roleplay</option><option value="puzzle">Puzzle</option><option value="racing">Racing</option><option value="other">Other</option></select></div><textarea id="creatorPayload" maxlength="50000" required placeholder="Paste your world data (JSON) or your game code (HTML/JS). Max 50 KB." style="min-height:130px;padding:11px;border-radius:8px;background:#081426;color:white;border:1px solid var(--line);font-family:monospace"></textarea><button class="primary" type="submit">SEND TO SUGGESTIONS</button><p id="creatorStatus" class="video-note" role="status"></p></form></div>
+ <p class="video-note" style="text-align:left;margin-top:16px">Likes are counted from player accounts. The 500-like goal is a real community milestone, not a preset count.</p>
+ </div></div>
+<div id="multiplayerInfo"><div class="panel menu-card" style="width:min(760px,100%);max-height:88vh;overflow:auto">
+ <h1 class="logo">SKY<span>HUB</span></h1><p class="tagline">PLAY TOGETHER · PICK A GAME OR CREATE YOUR OWN</p>
+ <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;text-align:left;margin:14px 0">
+  <button class="secondary" data-preset="survival"><b>🌲 SURVIVAL</b><br><small>Explore, mine, build and survive</small></button>
+  <button class="secondary" data-preset="creative"><b>🏗 CREATIVE BUILD</b><br><small>Unlimited blocks and free building</small></button>
+  <button class="secondary" data-preset="parkour"><b>🏃 PARKOUR</b><br><small>Jump across a challenge course</small></button>
+ </div>
+ <div class="panel" style="padding:14px;text-align:left;margin:12px 0"><b>＋ CREATE A CUSTOM GAME</b>
+  <input id="customGameName" maxlength="28" placeholder="Game name" style="display:block;width:100%;margin:9px 0;padding:11px;border-radius:9px;border:1px solid var(--line);background:#081426;color:#fff;font:inherit">
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><select id="customGameMode" style="flex:1;min-width:160px;padding:10px;border-radius:9px;background:#081426;color:#fff"><option value="survival">Survival</option><option value="creative">Creative Build</option><option value="parkour">Parkour</option></select><button class="primary" id="createCustomGame">CREATE ROOM</button></div>
+ </div>
+ <div style="text-align:left;margin:14px 0"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><b>🌐 PUBLIC GAMES</b><button class="secondary" id="refreshGames">↻ REFRESH</button></div><div id="publicGames" style="display:grid;gap:8px;margin-top:10px"><p class="video-note">Loading public games…</p></div></div>
+ <div class="panel" style="padding:12px;text-align:left"><b>JOIN BY ROOM CODE</b><div style="display:flex;gap:8px;margin-top:8px"><input id="roomCode" maxlength="16" placeholder="ROOM CODE" style="min-width:0;flex:1;padding:11px;border-radius:9px;border:1px solid var(--line);background:#081426;color:#fff"><button class="primary" id="connectMultiplayer">JOIN</button></div></div>
+ <p id="networkStatus" class="video-note">Server setup required before public rooms can connect.</p>
+ <div class="actions"><button class="secondary" id="disconnectMultiplayer" style="display:none">DISCONNECT</button><button class="secondary" id="backToModes">← BACK</button></div>
+ </div></div>
+<div id="adminPanel" style="position:fixed;inset:0;z-index:22;display:none;place-items:center;padding:18px;background:#071426ee"><div class="panel menu-card" style="width:min(430px,100%)"><h1 class="logo">SKY<span>ADMIN</span></h1><p class="tagline">ADMIN SIGN IN</p><input id="adminName" placeholder="Admin username" autocomplete="username" style="display:block;width:100%;margin:9px 0;padding:12px;border-radius:9px;border:1px solid var(--line);background:#081426;color:#fff"><input id="adminPassword" type="password" placeholder="Admin password" autocomplete="current-password" style="display:block;width:100%;margin:9px 0;padding:12px;border-radius:9px;border:1px solid var(--line);background:#081426;color:#fff"><p id="adminStatus" class="video-note"></p><div class="actions"><button class="primary" id="adminLogin">SIGN IN</button><button class="secondary" id="closeAdmin">CLOSE</button></div><div id="adminTools" style="display:none;text-align:left;margin-top:15px"><b>ADMIN TOOLS</b><p class="video-note">Review player submissions before publishing. You can approve or reject each project.</p><div id="adminSubmissions"></div><hr style="border-color:#ffffff22;margin:14px 0"><p class="video-note">Remove a room from the public games list.</p><div id="adminGameList"></div></div></div></div>
+<div id="menu"><div class="panel menu-card"><h1 class="logo">SKY<span>ENGINE</span></h1><div class="tagline">INFINITE VOXEL WORLD · BUILD · EXPLORE · SURVIVE</div><div class="actions"><button class="primary" id="play">▶ PLAY WORLD</button><button class="secondary" id="newWorld">＋ NEW WORLD</button></div><div class="instructions"><b>Explore</b> a world that generates new land as you travel. Build a home, make a garden, or reshape the landscape.<br><b>Desktop:</b> WASD move · Shift sprint · mouse look · Space jump · left click mine · right click place.<br><b>Mobile:</b> use the movement pad and tap blocks to interact.<br><b>Tip:</b> Your world saves automatically in this browser.</div></div></div>
+<script>
+(function(){
+ const form=document.getElementById('loginForm'), nameInput=document.getElementById('loginName'), passInput=document.getElementById('loginPassword');
+ const error=document.getElementById('loginError'), submit=document.getElementById('authSubmit');
+ const loginTab=document.getElementById('loginTab'), signInTab=document.getElementById('signInTab');
+ let mode='login';
+ function setMode(next){
+  mode=next;error.textContent='';
+  loginTab.classList.toggle('active',mode==='login');signInTab.classList.toggle('active',mode==='signin');
+  document.getElementById('authSubtitle').textContent=mode==='login'?'Log in to your account':'Sign in and create a new account';
+  submit.textContent=mode==='login'?'LOG IN':'SIGN IN';
+  passInput.autocomplete=mode==='login'?'current-password':'new-password';
+ }
+ loginTab.addEventListener('click',()=>setMode('login'));
+ signInTab.addEventListener('click',()=>setMode('signin'));
+ async function passwordHash(value){
+  const bytes=new TextEncoder().encode(value);
+  const digest=await crypto.subtle.digest('SHA-256',bytes);
+  return Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+ }
+ form.addEventListener('submit',async function(e){
+  e.preventDefault();submit.disabled=true;error.textContent='';
+  try{
+   const name=nameInput.value.trim(),pass=passInput.value;
+   if(!/^[a-zA-Z0-9_-]{3,24}$/.test(name)){error.textContent='Use 3–24 letters, numbers, _ or - for your account name.';return}
+   if(pass.length<6){error.textContent='Password must be at least 6 characters.';return}
+   const key='skyengine-accounts-v1';
+   const accounts=JSON.parse(localStorage.getItem(key)||'{}');
+   const accountKey=name.toLowerCase();
+   if(mode==='signin'){
+    if(accounts[accountKey]){error.textContent='That account name already exists. Choose LOG IN instead.';return}
+    accounts[accountKey]={name,passwordHash:await passwordHash(pass)};
+    localStorage.setItem(key,JSON.stringify(accounts));
+   }else{
+    if(!accounts[accountKey]||accounts[accountKey].passwordHash!==await passwordHash(pass)){error.textContent='Account name or password is incorrect.';return}
+   }
+   sessionStorage.setItem('skyengine-player-name',name);document.getElementById('loginGate').style.display='none';
+   document.getElementById('modeSelect').style.display='grid';loadCatalog();
+   document.getElementById('loginPassword').value='';
+  }catch(err){error.textContent='Could not save account in this browser. Check browser storage settings.'}
+  finally{submit.disabled=false}
+ });
+})();
+document.getElementById('singleplayer').addEventListener('click',()=>{document.getElementById('modeSelect').style.display='none';document.getElementById('menu').classList.add('show')});
+document.getElementById('joinMultiplayer').addEventListener('click',()=>{document.getElementById('modeSelect').style.display='none';document.getElementById('multiplayerInfo').style.display='grid'});
+document.getElementById('backToModes').addEventListener('click',()=>{document.getElementById('multiplayerInfo').style.display='none';document.getElementById('modeSelect').style.display='grid'});
+
+const GAME_API='https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev';
+// Catalog is loaded when the player reaches the SKYENGINE home screen.
+
+let currentGameMode='survival';
+const modeLabels={survival:'Survival',creative:'Creative Build',parkour:'Parkour'};
+async function apiRequest(path,options={}){
+ const response=await fetch(GAME_API+path,{...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});
+ const data=await response.json().catch(()=>({error:'Invalid server response'}));
+ if(!response.ok)throw new Error(data.error||'Server request failed');
+ return data;
+}
+function escapeText(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+let activeCategory='all';
+async function loadCatalog(){
+ const box=document.getElementById('catalogGames');
+ if(GAME_API.includes('YOUR-WORKER')){box.innerHTML='<p class="video-note">Creator publishing is ready in the interface. Deploy the Cloudflare Worker and set MULTIPLAYER_SERVER to enable the shared catalog, submissions and likes.</p>';return}
+ try{
+  const data=await apiRequest('/api/catalog');
+  const games=data.games.filter(g=>activeCategory==='all'||g.category===activeCategory);
+  if(!games.length){box.innerHTML='<p class="video-note">No approved games in this category yet. Be the first creator to submit one!</p>';return}
+  box.innerHTML=games.map(g=>'<article class="panel" style="padding:13px;display:grid;gap:8px"><div style="font-size:11px;color:#8edcff;text-transform:uppercase">'+escapeText(g.category)+' · '+escapeText(g.kind)+'</div><b style="font-size:17px">'+escapeText(g.title)+'</b><div class="video-note">'+escapeText(g.description)+'</div><div class="video-note">By '+escapeText(g.owner)+'</div><div style="display:flex;justify-content:space-between;align-items:center"><span>❤️ '+Number(g.likes||0)+' / 500 likes</span><button class="secondary" data-like="'+escapeText(g.id)+'">♥ LIKE</button></div></article>').join('');
+  box.querySelectorAll('[data-like]').forEach(b=>b.addEventListener('click',async()=>{try{const r=await apiRequest('/api/like',{method:'POST',body:JSON.stringify({id:b.dataset.like,player:sessionStorage.getItem('skyengine-player-name')})});if(r.alreadyLiked)toast('You already liked this game');await loadCatalog()}catch(e){toast(e.message)}}));
+ }catch(e){box.innerHTML='<p class="video-note">'+escapeText(e.message)+'</p>'}
+}
+document.querySelectorAll('[data-category]').forEach(b=>b.addEventListener('click',()=>{activeCategory=b.dataset.category;loadCatalog()}));
+document.getElementById('openCreator').addEventListener('click',()=>document.getElementById('creatorPanel').style.display='block');
+document.getElementById('closeCreator').addEventListener('click',()=>document.getElementById('creatorPanel').style.display='none');
+document.getElementById('creatorForm').addEventListener('submit',async e=>{
+ e.preventDefault();const status=document.getElementById('creatorStatus');status.textContent='Sending your project…';
+ try{
+  const result=await apiRequest('/api/submit',{method:'POST',body:JSON.stringify({title:document.getElementById('creatorTitle').value,description:document.getElementById('creatorDescription').value,category:document.getElementById('creatorCategory').value,kind:document.getElementById('creatorKind').value,payload:document.getElementById('creatorPayload').value,owner:sessionStorage.getItem('skyengine-player-name')||'Player'})});
+  status.textContent='Submitted! Suggestion #'+result.id+' is waiting for admin review.';e.target.reset();
+ }catch(err){status.textContent=err.message}
+});
+
+async function refreshPublicGames(){
+ const box=document.getElementById('publicGames');
+ if(GAME_API.includes('YOUR-WORKER')){box.innerHTML='<p class="video-note">Deploy the Cloudflare Worker and add its URL to index.html to load public games.</p>';return}
+ box.innerHTML='<p class="video-note">Loading…</p>';
+ try{
+  const data=await apiRequest('/api/games');
+  if(!data.games.length){box.innerHTML='<p class="video-note">No public rooms yet. Start one above!</p>';return}
+  box.innerHTML=data.games.map(g=>'<div class="panel" style="padding:11px;display:flex;justify-content:space-between;align-items:center;gap:10px"><div><b>'+escapeText(g.name)+'</b><div class="video-note">'+escapeText(modeLabels[g.mode]||g.mode)+' · Code: '+escapeText(g.id)+'</div></div><button class="primary" data-join-room="'+escapeText(g.id)+'">JOIN</button></div>').join('');
+  box.querySelectorAll('[data-join-room]').forEach(b=>b.addEventListener('click',()=>{document.getElementById('roomCode').value=b.dataset.joinRoom;connectMultiplayer()}));
+ }catch(e){box.innerHTML='<p class="video-note">'+escapeText(e.message)+'</p>'}
+}
+async function createPublicGame(name,mode){
+ try{
+  const data=await apiRequest('/api/games',{method:'POST',body:JSON.stringify({name,mode,owner:sessionStorage.getItem('skyengine-player-name')||'Player'})});
+  document.getElementById('roomCode').value=data.game.id;currentGameMode=mode;networkStatus('Room created: '+data.game.id+' · connecting…');await refreshPublicGames();connectMultiplayer();
+ }catch(e){networkStatus(e.message)}
+}
+document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{const mode=b.dataset.preset;createPublicGame(modeLabels[mode]+' Room',mode)}));
+document.getElementById('createCustomGame').addEventListener('click',()=>{const name=document.getElementById('customGameName').value.trim();if(name.length<3){networkStatus('Game name must be at least 3 characters.');return}createPublicGame(name,document.getElementById('customGameMode').value)});
+document.getElementById('refreshGames').addEventListener('click',refreshPublicGames);
+document.getElementById('joinMultiplayer').addEventListener('click',()=>refreshPublicGames());
+document.getElementById('openAdmin').addEventListener('click',()=>{document.getElementById('adminPanel').style.display='grid';document.getElementById('adminTools').style.display='none';document.getElementById('adminStatus').textContent=''});
+document.getElementById('closeAdmin').addEventListener('click',()=>document.getElementById('adminPanel').style.display='none');
+document.getElementById('adminLogin').addEventListener('click',async()=>{
+ const username=document.getElementById('adminName').value.trim(),password=document.getElementById('adminPassword').value;
+ const status=document.getElementById('adminStatus');status.textContent='Checking…';
+ try{
+  const data=await apiRequest('/api/admin/login',{method:'POST',body:JSON.stringify({username,password})});
+  if(!data.ok)throw new Error('Sign-in failed');
+  sessionStorage.setItem('skyengine-admin-session','yes');
+  document.getElementById('adminTools').style.display='block';status.textContent='Admin verified. Public room controls are ready.';
+  await loadAdminGames(username,password);await loadAdminSubmissions(username,password);
+ }catch(e){status.textContent=e.message}
+});
+
+async function loadAdminSubmissions(username,password){
+ const box=document.getElementById('adminSubmissions');
+ try{
+  const data=await apiRequest('/api/admin/submissions',{headers:{'X-Admin-Name':username,'X-Admin-Password':password}});
+  const pending=data.submissions.filter(x=>x.status==='pending');
+  box.innerHTML=pending.length?pending.map(x=>'<div class="panel" style="padding:11px;margin:8px 0"><b>'+escapeText(x.title)+'</b><div class="video-note">'+escapeText(x.category)+' · '+escapeText(x.kind)+' · by '+escapeText(x.owner)+'</div><p class="video-note">'+escapeText(x.description)+'</p><div style="display:flex;gap:8px"><button class="primary" data-review="approve" data-id="'+escapeText(x.id)+'">APPROVE & PUBLISH</button><button class="secondary" data-review="reject" data-id="'+escapeText(x.id)+'">REJECT</button></div></div>').join(''):'<p class="video-note">No pending suggestions.</p>';
+  box.querySelectorAll('[data-review]').forEach(b=>b.addEventListener('click',async()=>{try{await apiRequest('/api/admin/review',{method:'POST',headers:{'X-Admin-Name':username,'X-Admin-Password':password},body:JSON.stringify({id:b.dataset.id,action:b.dataset.review})});await loadAdminSubmissions(username,password);await loadCatalog()}catch(e){document.getElementById('adminStatus').textContent=e.message}}));
+ }catch(e){box.textContent=e.message}
+}
+async function loadAdminGames(username,password){
+ const data=await apiRequest('/api/games');
+ const box=document.getElementById('adminGameList');
+ box.innerHTML=data.games.length?data.games.map(g=>'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #ffffff22"><span>'+escapeText(g.name)+' · '+escapeText(g.id)+'</span><button class="secondary" data-remove-game="'+escapeText(g.id)+'">REMOVE</button></div>').join(''):'<p class="video-note">No public rooms.</p>';
+ box.querySelectorAll('[data-remove-game]').forEach(b=>b.addEventListener('click',async()=>{try{await apiRequest('/api/admin/remove',{method:'POST',headers:{'X-Admin-Name':username,'X-Admin-Password':password},body:JSON.stringify({id:b.dataset.removeGame})});await loadAdminGames(username,password);await refreshPublicGames()}catch(e){document.getElementById('adminStatus').textContent=e.message}}));
+}
+
+</script>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+// CrazyGames release build: guest-first, no external account gate or creator portal.
+const CG_RELEASE_BUILD = true;
+let cgSdkInitialized = false;
+(async function initializeCrazyGames(){
+ try{
+  if(window.CrazyGames?.SDK){
+   await window.CrazyGames.SDK.init();
+   cgSdkInitialized = true;
+   console.info('CrazyGames SDK initialized');
+  }else{
+   console.warn('CrazyGames SDK unavailable; local preview continues without platform services.');
+  }
+ }catch(error){console.warn('CrazyGames SDK initialization failed; local preview continues.',error)}
+})();
+function cgGameplayStart(){
+ try{if(cgSdkInitialized)window.CrazyGames.SDK.game.gameplayStart()}catch(error){console.warn('CrazyGames gameplayStart failed',error)}
+}
+function cgGameplayStop(){
+ try{if(cgSdkInitialized)window.CrazyGames.SDK.game.gameplayStop()}catch(error){console.warn('CrazyGames gameplayStop failed',error)}
+}
+document.getElementById('loginGate').style.display='none';
+document.getElementById('modeSelect').style.display='none';
+document.getElementById('multiplayerInfo').style.display='none';
+document.getElementById('adminPanel').style.display='none';
+document.getElementById('videoLoungeBtn').style.display='none';
+document.getElementById('menu').classList.add('show');
+document.getElementById('play').textContent='▶ START EXPLORING';
+sessionStorage.setItem('skyengine-player-name','Guest');
+
+
+function videoIdFromInput(value){
+ const raw=value.trim();
+ if(/^[a-zA-Z0-9_-]{11}$/.test(raw))return raw;
+ try{
+  const u=new URL(raw);
+  if(u.hostname==='youtu.be')return u.pathname.split('/').filter(Boolean)[0]||'';
+  if(u.hostname==='youtube.com'||u.hostname==='www.youtube.com'||u.hostname==='m.youtube.com'||u.hostname==='youtube-nocookie.com'){
+   if(u.pathname==='/watch')return u.searchParams.get('v')||'';
+   const parts=u.pathname.split('/').filter(Boolean);
+   if(['embed','shorts','live'].includes(parts[0]))return parts[1]||'';
+  }
+ }catch(e){}
+ return '';
+}
+const videoLounge=document.getElementById('videoLounge');
+document.getElementById('videoLoungeBtn').addEventListener('click',()=>videoLounge.classList.add('open'));
+document.getElementById('closeVideoLounge').addEventListener('click',()=>videoLounge.classList.remove('open'));
+videoLounge.addEventListener('click',e=>{if(e.target===videoLounge)videoLounge.classList.remove('open')});
+document.getElementById('videoForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ const id=videoIdFromInput(document.getElementById('videoInput').value);
+ if(!/^[a-zA-Z0-9_-]{11}$/.test(id)){toast('Please enter a valid YouTube video link or 11-character ID');return}
+ document.getElementById('videoFrame').src='https://www.youtube-nocookie.com/embed/'+id;
+});
+const mount=document.getElementById('game');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x8ed0f2);scene.fog=new THREE.Fog(0x8ed0f2,18,48);
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,160);
+scene.add(camera);
+const viewArm=new THREE.Group();
+const sleeve=new THREE.Mesh(new THREE.BoxGeometry(.22,.34,.24),new THREE.MeshLambertMaterial({color:0x3b83bd}));
+sleeve.position.set(.43,-.39,-.58);viewArm.add(sleeve);
+const handMesh=new THREE.Mesh(new THREE.BoxGeometry(.19,.2,.2),new THREE.MeshLambertMaterial({color:0xc58b62}));
+handMesh.position.set(.43,-.57,-.62);viewArm.add(handMesh);
+const heldBlock=new THREE.Mesh(new THREE.BoxGeometry(.27,.27,.27),new THREE.MeshLambertMaterial({color:0x4caf35}));
+heldBlock.position.set(.27,-.43,-.88);viewArm.add(heldBlock);
+camera.add(viewArm);
+
+const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=false;renderer.setClearColor(0x87ceeb,1);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;mount.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xdaf3ff,0x62704b,2.0));
+const sun=new THREE.DirectionalLight(0xfff3d6,2.2);sun.position.set(-18,30,12);sun.castShadow=false;scene.add(sun);
+function pixelTexture(base,accent,pattern='noise'){
+ const c=document.createElement('canvas');c.width=c.height=16;const ctx=c.getContext('2d');
+ ctx.fillStyle=base;ctx.fillRect(0,0,16,16);
+ let seed=base.charCodeAt(1)*97+(pattern.length*31);const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+ if(pattern==='wood'){
+  for(let x=1;x<16;x+=4){ctx.fillStyle=accent;ctx.fillRect(x,0,1,16)}
+  for(let i=0;i<12;i++){const y=Math.floor(rand()*16),x=Math.floor(rand()*16);ctx.fillStyle=accent;ctx.fillRect(x,y,2,1)}
+ }else if(pattern==='brick'){
+  for(let y=0;y<16;y+=5){ctx.fillStyle='#e0a08a';ctx.fillRect(0,y,16,1)}
+  for(let y=0;y<16;y+=5)for(let x=(Math.floor(y/5)%2)*4;x<16;x+=8){ctx.fillStyle='#e0a08a';ctx.fillRect(x,y,1,5)}
+  for(let i=0;i<12;i++){ctx.fillStyle=accent;ctx.fillRect(Math.floor(rand()*16),Math.floor(rand()*16),2,1)}
+ }else if(pattern==='grass'){
+  for(let i=0;i<58;i++){ctx.fillStyle=rand()>.5?accent:'#8bd65c';ctx.fillRect(Math.floor(rand()*16),Math.floor(rand()*16),1+Math.floor(rand()*2),1)}
+ }else if(pattern==='stone'){
+  for(let i=0;i<42;i++){ctx.fillStyle=rand()>.5?accent:'#b3bbc1';ctx.fillRect(Math.floor(rand()*16),Math.floor(rand()*16),1+Math.floor(rand()*2),1+Math.floor(rand()*2))}
+  ctx.fillStyle='#626d75';ctx.fillRect(3,4,4,1);ctx.fillRect(10,11,3,1);
+ }else if(pattern==='leaves'){
+  for(let i=0;i<34;i++){ctx.fillStyle=rand()>.5?accent:'#62b957';const x=Math.floor(rand()*15),y=Math.floor(rand()*15);ctx.fillRect(x,y,2,2)}
+ }else if(pattern==='sand'){
+  for(let i=0;i<45;i++){ctx.fillStyle=rand()>.5?accent:'#f3df9d';ctx.fillRect(Math.floor(rand()*16),Math.floor(rand()*16),1,1)}
+ }else if(pattern==='ore'){
+  for(let i=0;i<38;i++){ctx.fillStyle=rand()>.5?accent:'#68727b';const x=Math.floor(rand()*15),y=Math.floor(rand()*15);ctx.fillRect(x,y,2,2)}
+ }else{
+  for(let i=0;i<38;i++){if(rand()>.45){ctx.fillStyle=accent;ctx.fillRect(Math.floor(rand()*16),Math.floor(rand()*16),1+Math.floor(rand()*2),1+Math.floor(rand()*2))}}
+ }
+ const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;tex.magFilter=THREE.NearestFilter;tex.minFilter=THREE.NearestMipmapNearestFilter;tex.generateMipmaps=true;tex.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());return tex;
+}
+function grassSideTexture(){
+ const c=document.createElement('canvas');c.width=c.height=16;const ctx=c.getContext('2d');
+ ctx.fillStyle='#93603a';ctx.fillRect(0,0,16,16);
+ let seed=91827;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+ for(let i=0;i<45;i++){ctx.fillStyle=rand()>.5?'#a87343':'#75472d';ctx.fillRect(Math.floor(rand()*16),4+Math.floor(rand()*12),1+Math.floor(rand()*2),1+Math.floor(rand()*2))}
+ ctx.fillStyle='#347d27';ctx.fillRect(0,0,16,4);ctx.fillStyle='#58b83a';
+ for(let i=0;i<24;i++)ctx.fillRect(Math.floor(rand()*16),Math.floor(rand()*4),1,1);
+ const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;tex.magFilter=THREE.NearestFilter;tex.minFilter=THREE.NearestMipmapNearestFilter;return tex;
+}
+const mats={
+ bedrock:new THREE.MeshLambertMaterial({map:pixelTexture('#242a31','#11161c','stone')}),
+ grass:[new THREE.MeshLambertMaterial({map:grassSideTexture()}),new THREE.MeshLambertMaterial({map:grassSideTexture()}),new THREE.MeshLambertMaterial({map:pixelTexture('#4caf35','#276b24','grass')}),new THREE.MeshLambertMaterial({map:pixelTexture('#9a6238','#684027')}),new THREE.MeshLambertMaterial({map:grassSideTexture()}),new THREE.MeshLambertMaterial({map:grassSideTexture()})],
+ dirt:new THREE.MeshLambertMaterial({map:pixelTexture('#9a6238','#684027')}),
+ stone:new THREE.MeshLambertMaterial({map:pixelTexture('#929ba3','#606b74','stone')}),
+ wood:new THREE.MeshLambertMaterial({map:pixelTexture('#b47a3f','#704523','wood')}),
+ leaves:new THREE.MeshLambertMaterial({map:pixelTexture('#258b35','#145524','leaves')}),
+ sand:new THREE.MeshLambertMaterial({map:pixelTexture('#e5cc7c','#b99a4d','sand')}),
+ brick:new THREE.MeshLambertMaterial({map:pixelTexture('#bd5540','#753b32','brick')}),
+ glass:new THREE.MeshLambertMaterial({color:0x9ce8f5,transparent:true,opacity:.48,depthWrite:true,side:THREE.DoubleSide}),
+ glider:new THREE.MeshLambertMaterial({color:0x68cfff}),
+ crafting_table:new THREE.MeshLambertMaterial({map:pixelTexture('#9a6338','#e2b36c','wood')}),
+ flower:new THREE.MeshLambertMaterial({color:0xf3a6cb}),
+ coal:new THREE.MeshLambertMaterial({map:pixelTexture('#555d64','#20252a','ore')}),
+ iron:new THREE.MeshLambertMaterial({map:pixelTexture('#b5a38e','#a65b37','ore')}),
+ gold_block:new THREE.MeshLambertMaterial({map:pixelTexture('#f2c230','#ffe878','gold')}),
+ diamond:new THREE.MeshPhongMaterial({map:pixelTexture('#b9ffff','#35cde8','ore'),color:0xbafcff,emissive:0x087f9a,emissiveIntensity:.32,shininess:110,specular:0xffffff})
+};
+heldBlock.material=mats.grass[2];
+const blockTypes=['grass','dirt','stone','wood','leaves','brick','sand','glass','coal','iron','gold_block','diamond','glider','crafting_table'];
+const mineSeconds={grass:.75,dirt:.75,sand:.75,leaves:.3,wood:3,brick:3,stone:7.5,coal:15,iron:15,gold_block:15,diamond:15,glass:.3,glider:.35,crafting_table:3.75};
+let mining=null;const mineStatus=document.getElementById('mineStatus');
+const toolsList=[{name:'Hand',icon:'✋',power:1},{name:'Wood Pickaxe',icon:'🪓',power:2},{name:'Stone Pickaxe',icon:'⛏',power:4},{name:'Iron Pickaxe',icon:'⚒',power:6},{name:'Diamond Pickaxe',icon:'💎',power:8}];let toolIndex=0;
+function cycleTool(){toolIndex=(toolIndex+1)%toolsList.length;const t=toolsList[toolIndex];document.getElementById('tool').textContent=t.icon+' '+t.name;toast(t.name+' selected');}const icons={grass:'🟩',dirt:'🟫',stone:'⬜',wood:'🪵',leaves:'🌿',brick:'🧱',sand:'🟨',glass:'🔹',coal:'⚫',iron:'🔩',gold_block:'🟡',diamond:'💎',glider:'🪂',crafting_table:'🪚'};
+const geo=new THREE.BoxGeometry(1,1,1);const blocks=new Map();const meshes=new Map();const instanceKeys=new Map();const key=(x,y,z)=>x+','+y+','+z;
+function syncRender(){
+ for(const m of meshes.values())scene.remove(m);
+ meshes.clear();instanceKeys.clear();
+ const grouped=new Map();
+ // Skip cubes with all six neighbors occupied: none of their faces can be seen.
+ for(const [k,type] of blocks){
+  const [x,y,z]=k.split(',').map(Number);
+  if(blocks.has(key(x+1,y,z))&&blocks.has(key(x-1,y,z))&&blocks.has(key(x,y+1,z))&&blocks.has(key(x,y-1,z))&&blocks.has(key(x,y,z+1))&&blocks.has(key(x,y,z-1)))continue;
+  if(!grouped.has(type))grouped.set(type,[]);
+  grouped.get(type).push([k,x,y,z]);
+ }
+ const dummy=new THREE.Object3D();
+ for(const [type,entries] of grouped){
+  // Transparent glass is rendered as individual meshes so Three.js can sort
+  // each pane back-to-front instead of sorting one large InstancedMesh.
+  if(type==='glass'){
+   entries.forEach(([k,x,y,z])=>{
+    const pane=new THREE.Mesh(geo,mats.glass);
+    pane.position.set(x,y,z);pane.castShadow=false;pane.receiveShadow=false;
+    pane.userData.type='glass';pane.userData.blockKey=k;pane.renderOrder=1;
+    scene.add(pane);meshes.set('glass:'+k,pane);
+   });
+   continue;
+  }
+  if(type==='flower'){
+   entries.forEach(([k,x,y,z])=>{
+    // Small recognizable flower: thin green stem, five rounded petals, yellow center.
+    const bloom=new THREE.Group();
+    const stem=new THREE.Mesh(new THREE.CylinderGeometry(.025,.035,.28,5),new THREE.MeshLambertMaterial({color:0x398b38}));
+    stem.position.y=.14;bloom.add(stem);
+    const leaf=new THREE.Mesh(new THREE.SphereGeometry(.075,5,4),new THREE.MeshLambertMaterial({color:0x4fae45}));
+    leaf.scale.set(1,.35,.7);leaf.position.set(.065,.13,0);bloom.add(leaf);
+    const petalMat=new THREE.MeshLambertMaterial({color:0xf28bb8});
+    for(let i=0;i<5;i++){
+     const angle=i*Math.PI*2/5;
+     const petal=new THREE.Mesh(new THREE.SphereGeometry(.085,6,5),petalMat);
+     petal.position.set(Math.cos(angle)*.105,.34,Math.sin(angle)*.105);
+     petal.scale.set(1,.62,1);bloom.add(petal);
+    }
+    const center=new THREE.Mesh(new THREE.SphereGeometry(.055,6,5),new THREE.MeshLambertMaterial({color:0xffd84d}));
+    center.position.y=.35;bloom.add(center);
+    bloom.position.set(x,y,z);
+    bloom.traverse(part=>{if(part.isMesh){part.userData.type='flower';part.userData.blockKey=k}});
+    scene.add(bloom);meshes.set('flower:'+k,bloom);
+   });
+   continue;
+  }
+  const inst=new THREE.InstancedMesh(geo,mats[type]||mats.grass,entries.length);
+  const ids=[];
+  entries.forEach(([k,x,y,z],i)=>{dummy.position.set(x,y,z);dummy.updateMatrix();inst.setMatrixAt(i,dummy.matrix);ids.push(k)});
+  inst.instanceMatrix.needsUpdate=true;inst.castShadow=false;inst.receiveShadow=false;inst.userData.type=type;
+  scene.add(inst);meshes.set(type,inst);instanceKeys.set(type,ids);
+ }
+}
+let selected='grass',placed=0,started=false,locked=false,paused=true,velocityY=0,onGround=false,worldTime=0;let animals=[],xpOrbs=[];let creative=false;let health=20,hunger=20,xp=0,level=0,hungerClock=0,regenClock=0,lastFallY=0;const inventory=Object.fromEntries(blockTypes.map(t=>[t,0]));inventory.food=0;const player={x:0,y:4,z:7};const keys={};let jumpHeld=false;let yaw=0,pitch=0;const ray=new THREE.Raycaster();ray.far=6;
+/* SKYENGINE multiplayer client. Set this to the deployed Cloudflare Worker URL. */
+const MULTIPLAYER_SERVER='https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev';
+let multiplayerSocket=null,multiplayerRoom='',networkSendClock=0;
+const remotePlayers=new Map();
+function networkStatus(message){const el=document.getElementById('networkStatus');if(el)el.textContent=message}
+function sendNetwork(data){if(multiplayerSocket&&multiplayerSocket.readyState===WebSocket.OPEN)multiplayerSocket.send(JSON.stringify(data))}
+function makeRemotePlayer(id,name,x=0,y=4,z=0){
+ let entry=remotePlayers.get(id);
+ if(!entry){
+  const group=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.BoxGeometry(.58,.9,.34),new THREE.MeshLambertMaterial({color:0x3b83bd}));
+  body.position.y=-.15;group.add(body);
+  const head=new THREE.Mesh(new THREE.BoxGeometry(.42,.42,.42),new THREE.MeshLambertMaterial({color:0xc58b62}));
+  head.position.y=.55;group.add(head);
+  const label=document.createElement('div');label.textContent=name;label.style.cssText='position:fixed;z-index:2;color:white;background:#101a2bcc;padding:3px 7px;border-radius:6px;font:12px sans-serif;pointer-events:none;display:none';
+  document.body.appendChild(label);entry={group,label,name};remotePlayers.set(id,entry);scene.add(group);
+ }
+ entry.name=name;entry.label.textContent=name;entry.group.position.set(x,y-.35,z);return entry;
+}
+function removeRemotePlayer(id){const p=remotePlayers.get(id);if(!p)return;scene.remove(p.group);p.label.remove();remotePlayers.delete(id)}
+function applyRemoteBlock(keyString,block){
+ const parts=String(keyString).split(',').map(Number);if(parts.length!==3||parts.some(n=>!Number.isInteger(n)))return;
+ const k=key(parts[0],parts[1],parts[2]);worldEdits.set(k,block===null?null:block);
+ if(block===null)blocks.delete(k);else if(loadedChunks.has(chunkId(parts[0],parts[2])))blocks.set(k,block);
+ syncRender();
+}
+function disconnectMultiplayer(message='Disconnected from room'){
+ if(multiplayerSocket){multiplayerSocket.onclose=null;multiplayerSocket.close();multiplayerSocket=null}
+ for(const id of [...remotePlayers.keys()])removeRemotePlayer(id);
+ multiplayerRoom='';document.getElementById('disconnectMultiplayer').style.display='none';
+ document.getElementById('connectMultiplayer').style.display='inline-block';networkStatus(message);
+}
+function connectMultiplayer(){
+ const room=(document.getElementById('roomCode').value||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,16);
+ if(room.length<3){networkStatus('Enter a room code with at least 3 characters.');return}
+ if(MULTIPLAYER_SERVER.includes('YOUR-WORKER')){networkStatus('Server not deployed yet. Follow the Cloudflare setup steps first.');return}
+ disconnectMultiplayer('Connecting…');multiplayerRoom=room;
+ const url=new URL(MULTIPLAYER_SERVER);url.protocol=url.protocol==='https:'?'wss:':'ws:';url.pathname='/room/'+encodeURIComponent(room);
+ const gameMode=currentGameMode;url.searchParams.set('mode',gameMode);
+ const socket=new WebSocket(url);multiplayerSocket=socket;
+ socket.onopen=()=>{const name=sessionStorage.getItem('skyengine-player-name')||'Player';sendNetwork({type:'join',name});networkStatus('Connected to room '+room+' — waiting for world sync…');document.getElementById('disconnectMultiplayer').style.display='inline-block';document.getElementById('connectMultiplayer').style.display='none';document.getElementById('multiplayerInfo').style.display='none';document.getElementById('menu').classList.add('show')};
+ socket.onmessage=e=>{
+  let msg;try{msg=JSON.parse(e.data)}catch{return}
+  if(msg.type==='welcome'){
+   currentGameMode=msg.game?.mode||currentGameMode;creative=currentGameMode==='creative';document.getElementById('mode').textContent=creative?'Creative':'Survival';if(currentGameMode==='parkour'){player.x=0;player.z=0;player.y=9.55;lastChunkX=Infinity;lastChunkZ=Infinity;updateChunks(true);toast('🏁 Parkour course loaded — reach the gold finish!')}updateStats();
+   (msg.players||[]).forEach(p=>{if(p.id!==msg.id)makeRemotePlayer(p.id,p.name,p.x,p.y,p.z)});
+   (msg.edits||[]).forEach(edit=>applyRemoteBlock(edit.key,edit.block));
+   networkStatus('In room '+room+' · '+((msg.players||[]).length+1)+' player(s) online');
+  }else if(msg.type==='player'){
+   const p=msg.player;if(p&&p.id!==msg.id)makeRemotePlayer(p.id,p.name,p.x,p.y,p.z);
+  }else if(msg.type==='leave'){removeRemotePlayer(msg.id);networkStatus('A player left · room '+room)}
+  else if(msg.type==='block'){applyRemoteBlock(msg.key,msg.block)}
+ };
+ socket.onerror=()=>networkStatus('Could not reach the multiplayer server. Check the Worker URL and deployment.');
+ socket.onclose=()=>{if(multiplayerSocket===socket)disconnectMultiplayer('Room connection closed')};
+}
+document.getElementById('connectMultiplayer').addEventListener('click',connectMultiplayer);
+document.getElementById('disconnectMultiplayer').addEventListener('click',()=>disconnectMultiplayer());
+
+const targetOutline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.012,1.012,1.012)),new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.95,depthTest:true}));targetOutline.visible=false;targetOutline.renderOrder=10;scene.add(targetOutline);
+const worldEdits=new Map();
+function addBlock(x,y,z,type='grass',save=true){const k=key(x,y,z);if(blocks.has(k))return false;blocks.set(k,type);if(save){worldEdits.set(k,type);placed++;updateStats();syncRender();sendNetwork({type:'block',key:k,block:type})}return true}
+function removeBlock(x,y,z){const k=key(x,y,z);if(y<=-6){toast('Bedrock is unbreakable!');return false}if(!blocks.has(k))return false;blocks.delete(k);worldEdits.set(k,null);placed=Math.max(0,placed-1);updateStats();syncRender();sendNetwork({type:'block',key:k,block:null});return true}
+function heightAt(x,z){return Math.floor(2+Math.sin(x*.22)*2.1+Math.cos(z*.19)*1.8+Math.sin((x+z)*.12)*1.2+Math.sin(x*.47+z*.31)*.45)}
+function surfaceBiome(x,z){const v=Math.sin(x*.035+z*.021)*Math.cos(z*.029-x*.017);return v>.48?'desert':v<-.58?'rocky':'meadow'}
+function tree(x,z){const h=3+(Math.abs(x*7+z*3)%2);for(let y=1;y<=h;y++)addBlock(x,y,z,'wood',false);for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)for(let dy=0;dy<=2;dy++){if(Math.abs(dx)+Math.abs(dz)+dy<5&&!(dx===0&&dz===0&&dy===0))addBlock(x+dx,h+dy,z+dz,'leaves',false)}}
+function buildHouse(cx,cz,w,d,wall,roof){
+ const x0=cx-Math.floor(w/2),z0=cz-Math.floor(d/2);let base=-99;
+ for(let x=x0-1;x<=x0+w;x++)for(let z=z0-1;z<=z0+d;z++)base=Math.max(base,heightAt(x,z));
+ for(let x=x0-1;x<=x0+w;x++)for(let z=z0-1;z<=z0+d;z++){
+  for(let y=heightAt(x,z)+1;y<=base;y++)addBlock(x,y,z,'dirt',false);
+  for(let y=base+1;y<=base+6;y++){const k=key(x,y,z);blocks.delete(k);worldEdits.set(k,null);}
+ }
+ for(let x=x0;x<x0+w;x++)for(let z=z0;z<z0+d;z++){
+  addBlock(x,base,z,'wood',false);
+  for(let y=base+1;y<=base+3;y++){
+   const edge=x===x0||x===x0+w-1||z===z0||z===z0+d-1;
+   if(edge){
+    const door=x===cx&&z===z0+d-1&&y<=base+2;
+    const window=(y===base+2)&&((x===x0||x===x0+w-1)&&(z===cz||z===cz+1));
+    if(!door)addBlock(x,y,z,window?'glass':wall,false);
+   }
+  }
+ }
+ for(let x=x0-1;x<=x0+w;x++)for(let z=z0-1;z<=z0+d;z++)addBlock(x,base+4,z,roof,false);
+ addBlock(cx,base+1,z0+d-1,'wood',false);addBlock(cx,base+2,z0+d-1,'wood',false);
+}
+function preserveVillage(){for(const [k,v] of blocks){const [x,,z]=k.split(',').map(Number);const houseOrPath=x>=5&&x<=15&&z>=-17&&z<=5;const mine=x>=-11&&x<=-8&&z>=-5&&z<=-2;if(houseOrPath||mine)worldEdits.set(k,v)}}
+function buildVillageAndMine(){
+ // Three small houses and a path form a visible village ahead of spawn.
+ buildHouse(7,-7,5,5,'wood','brick');
+ buildHouse(13,-7,5,5,'brick','brick');
+ buildHouse(10,-14,5,5,'wood','wood');
+ for(let z=-5;z<=5;z++)for(let x=8;x<=10;x++){
+  const y=heightAt(x,z);addBlock(x,y+1,z,'sand',false);
+ }
+ // A framed mine shaft sits on the hill to the left of the village.
+ const mx=-9,mz=-3,top=heightAt(mx,mz);
+ for(let x=mx-1;x<=mx;x++)for(let z=mz-1;z<=mz;z++)for(let y=top-4;y<=top;y++){const k=key(x,y,z);blocks.delete(k);worldEdits.set(k,null);}
+ for(let x=mx-2;x<=mx+1;x++){addBlock(x,top+1,mz-2,'stone',false);addBlock(x,top+1,mz+1,'stone',false)}
+ for(let z=mz-1;z<=mz;z++){addBlock(mx-2,top+1,z,'stone',false);addBlock(mx+1,top+1,z,'stone',false)}
+ addBlock(mx-2,top+2,mz-2,'wood',false);addBlock(mx+1,top+2,mz-2,'wood',false);
+ addBlock(mx-2,top+2,mz+1,'wood',false);addBlock(mx+1,top+2,mz+1,'wood',false);
+ for(let y=top;y>top-4;y--){addBlock(mx-2,y,mz-2,'wood',false);addBlock(mx+1,y,mz-2,'wood',false)}
+}
+const CHUNK_SIZE=16,CHUNK_RADIUS=1,loadedChunks=new Set(); // Infinite terrain streams in around the player.
+let lastChunkX=Infinity,lastChunkZ=Infinity;
+function chunkId(cx,cz){return cx+','+cz}
+function generateChunk(cx,cz){
+ const id=chunkId(cx,cz);if(loadedChunks.has(id))return;
+ const minX=cx*CHUNK_SIZE,minZ=cz*CHUNK_SIZE;
+ for(let x=minX;x<minX+CHUNK_SIZE;x++)for(let z=minZ;z<minZ+CHUNK_SIZE;z++){
+  const h=heightAt(x,z);
+  const biome=surfaceBiome(x,z);
+  for(let y=-6;y<=h;y++){
+   if(y===-6){addBlock(x,y,z,'bedrock',false);continue;}
+   let t=y===h?(biome==='desert'?'sand':biome==='rocky'?'stone':'grass'):y>h-3?(biome==='desert'?'sand':biome==='rocky'?'stone':'dirt'):'stone';
+   const caveField=Math.sin(x*.16+y*.31)*Math.cos(z*.17-y*.27)+Math.sin((x-z)*.11+y*.19)*.55;
+   // Smooth 3D cave pockets and winding tunnels below the surface.
+   if(y<h-3&&y>-6&&caveField>.95)continue;
+   if(y<-2&&Math.sin(x*1.7+y*2.3+z*.8)*Math.cos(z*1.2-y*.7)>.72)continue;
+   if(y<-2&&Math.abs(Math.sin(x*2.7+z*1.3+y*3.1))>.91)t='coal';
+   if(y<-3&&Math.abs(Math.sin(x*1.3-z*2.1+y*2.4))>.94)t='iron';
+   if(y<-4&&Math.abs(Math.sin(x*.9+z*1.8-y*2.2))>.975)t='gold_block';
+   if(y<-4&&Math.abs(Math.sin(x*2.2-z*.7+y*1.9))>.992)t='diamond';
+   addBlock(x,y,z,t,false);
+  }
+  // Deterministic trees: the same coordinates always produce the same forest.
+  const treeSeed=Math.abs(Math.sin(x*127.1+z*311.7)*43758.5453)%1;
+  if(treeSeed>.982&&Math.hypot(x,z)>5&&biome==='meadow')tree(x,z);
+  if(Math.abs(Math.sin(x*17.13+z*41.7)*10000)%1>.994){
+   const flowerY=heightAt(x,z)+1;addBlock(x,flowerY,z,'flower',false);
+  }
+ }
+ // Apply saved mining/building changes after natural terrain is generated.
+ for(const [k,v] of worldEdits){const [x,y,z]=k.split(',').map(Number);if(x>=minX&&x<minX+CHUNK_SIZE&&z>=minZ&&z<minZ+CHUNK_SIZE){if(v===null)blocks.delete(k);else blocks.set(k,v)}}
+ loadedChunks.add(id);
+}
+function updateChunks(force=false){
+ const cx=Math.floor(player.x/CHUNK_SIZE),cz=Math.floor(player.z/CHUNK_SIZE);
+ if(!force&&cx===lastChunkX&&cz===lastChunkZ)return;
+ lastChunkX=cx;lastChunkZ=cz;
+ let changed=false;
+ for(let x=cx-CHUNK_RADIUS;x<=cx+CHUNK_RADIUS;x++)for(let z=cz-CHUNK_RADIUS;z<=cz+CHUNK_RADIUS;z++){
+  const id=chunkId(x,z);if(!loadedChunks.has(id)){generateChunk(x,z);changed=true}
+ }
+ // Keep a moving window loaded so exploration stays smooth on ordinary computers.
+ for(const id of [...loadedChunks]){
+  const [x,z]=id.split(',').map(Number);
+  if(Math.abs(x-cx)>CHUNK_RADIUS||Math.abs(z-cz)>CHUNK_RADIUS){
+   const minX=x*CHUNK_SIZE,minZ=z*CHUNK_SIZE;
+   for(const k of [...blocks.keys()]){const [bx,,bz]=k.split(',').map(Number);if(bx>=minX&&bx<minX+CHUNK_SIZE&&bz>=minZ&&bz<minZ+CHUNK_SIZE)blocks.delete(k)}
+   loadedChunks.delete(id);changed=true;
+  }
+ }
+ if(changed)syncRender();
+}
+function generate(){
+ blocks.clear();meshes.clear();loadedChunks.clear();worldEdits.clear();animals.forEach(a=>scene.remove(a.group));animals=[];placed=0;
+ let spawnX,spawnZ;do{spawnX=Math.floor(Math.random()*65)-32;spawnZ=Math.floor(Math.random()*65)-32;}while((spawnX>=4&&spawnX<=18&&spawnZ>=-19&&spawnZ<=-3)||(spawnX>=-13&&spawnX<=-6&&spawnZ>=-7&&spawnZ<=1));player.x=spawnX;player.z=spawnZ;player.y=heightAt(spawnX,spawnZ)+2;health=20;hunger=20;xp=0;level=0;for(const t of blockTypes)inventory[t]=0;inventory.food=0;creative=false;document.getElementById('mode').textContent='Survival';lastChunkX=Infinity;lastChunkZ=Infinity;
+ updateChunks(true);
+ // Clear a small safe landing area so each new world starts in an open spot.
+ for(let sx=spawnX-1;sx<=spawnX+1;sx++)for(let sz=spawnZ-1;sz<=spawnZ+1;sz++)for(let sy=heightAt(sx,sz)+1;sy<=heightAt(sx,sz)+4;sy++){const sk=key(sx,sy,sz);if(blocks.has(sk)){blocks.delete(sk);worldEdits.set(sk,null);}}
+ buildVillageAndMine();preserveVillage();spawnAnimals();syncRender();updateStats();
+}
+function updateStats(){buildHotbar();document.getElementById('stats').innerHTML='WORLD: Endless Meadow<br>♥ '+health+'/20　🍗 '+hunger+'/20　🍎 '+(inventory.food||0)+'　✨ Lv '+level+' ('+xp+' XP)<br>BLOCKS: '+placed+' placed';document.getElementById('inventory').textContent=blockTypes.map(t=>icons[t]+' '+(creative?'∞':inventory[t])).join('　')}
+function save(){const data={edits:[...worldEdits.entries()],player,selected,inventory,creative,health,hunger,xp,level};try{localStorage.setItem('skyblocks-world',JSON.stringify(data))}catch(e){toast('Could not save in this browser')}}
+function load(){try{const d=JSON.parse(localStorage.getItem('skyblocks-world'));if(!d?.edits)return false;worldEdits.clear();for(const [k,v] of d.edits)worldEdits.set(k,v);Object.assign(player,d.player||{});selected=d.selected||'grass';if(d.inventory)Object.assign(inventory,d.inventory);creative=d.creative??false;health=d.health??20;hunger=d.hunger??20;xp=d.xp??0;level=d.level??0;lastChunkX=Infinity;lastChunkZ=Infinity;updateChunks(true);if(player.x===undefined||player.z===undefined){player.x=0;player.z=7;player.y=heightAt(0,7)+2}buildVillageAndMine();for(const [k,v] of worldEdits){if(v===null)blocks.delete(k);else blocks.set(k,v)}spawnAnimals();syncRender();document.getElementById('mode').textContent=creative?'Creative':'Survival';updateStats();return true}catch(e){return false}}
+function spawnAnimals(){
+ animals.forEach(a=>scene.remove(a.group));animals=[];
+ const kinds=['sheep','sheep','cow','cow','pig','pig','chicken','chicken','zombie','skeleton','iron_golem','iron_golem'];
+ for(let i=0;i<kinds.length;i++){
+  const kind=kinds[i],group=new THREE.Group();
+  const colors={sheep:0xf0eee6,cow:0x8b684b,pig:0xe99b9b,chicken:0xf5f0dc,zombie:0x397b45,skeleton:0xd8d8c8,iron_golem:0xb9b8a8};
+  const bodyMat=new THREE.MeshLambertMaterial({color:colors[kind]});
+  const dark=new THREE.MeshLambertMaterial({color:kind==='iron_golem'?0x777b76:kind==='skeleton'?0x777777:0x4b3530});
+  const tall=kind==='iron_golem',body=new THREE.Mesh(new THREE.BoxGeometry(tall?.9:.75,tall?1.25:.62,tall?.55:.48),bodyMat);body.position.y=tall?1.05:.72;group.add(body);
+  const head=new THREE.Mesh(new THREE.BoxGeometry(tall?.55:.38,tall?.55:.4,tall?.5:.38),bodyMat);head.position.set(0,tall?1.95:1.22,0);group.add(head);
+  if(tall){const nose=new THREE.Mesh(new THREE.BoxGeometry(.16,.28,.16),dark);nose.position.set(0,1.9,.29);group.add(nose);for(const side of [-1,1]){const arm=new THREE.Mesh(new THREE.BoxGeometry(.22,1.1,.24),bodyMat);arm.position.set(side*.62,1.05,0);group.add(arm)}}
+  else{const muzzle=new THREE.Mesh(new THREE.BoxGeometry(.2,.18,.2),dark);muzzle.position.set(0,1.12,.2);group.add(muzzle)}
+  for(const side of [-1,1])for(const front of [-1,1]){const leg=new THREE.Mesh(new THREE.BoxGeometry(.14,tall?.62:.38,.14),dark);leg.position.set(side*.22,tall?.31:.28,front*.14);group.add(leg)}
+  const golemIndex=i-10,sx=tall?(golemIndex===0?6:12):player.x-22+Math.random()*44,sz=tall?-2:-22+Math.random()*44;
+  group.position.set(sx,heightAt(sx,sz)+.5,sz);scene.add(group);animals.push({group,phase:i*1.7,speed:tall?.08:.18+i*.025,sheared:false,kind});
+ }
+}
+function gainXP(amount,x,y,z){
+ let left=amount;while(left>0){const value=Math.min(left,3);left-=value;const orb=new THREE.Mesh(new THREE.SphereGeometry(.13,8,8),new THREE.MeshBasicMaterial({color:0x7dff45}));orb.position.set(x+(Math.random()-.5)*.7,y+.7+Math.random()*.5,z+(Math.random()-.5)*.7);scene.add(orb);xpOrbs.push({mesh:orb,value,phase:Math.random()*6,life:18});}
+}
+function collectXP(amount){xp+=amount;while(xp>=level*10+10){xp-=level*10+10;level++;toast('LEVEL UP! Level '+level)}updateStats();save()}
+function damagePlayer(amount,reason='Damage'){
+ if(creative||health<=0)return;health=Math.max(0,health-amount);updateStats();toast(reason+' -'+amount+' HP');
+ if(health===0){toast('You died! Respawning...');setTimeout(()=>{player.x=Math.round(player.x/16)*16;player.z=Math.round(player.z/16)*16;player.y=heightAt(Math.round(player.x),Math.round(player.z))+2;health=20;hunger=Math.max(6,hunger);velocityY=0;for(const t of blockTypes){const lost=Math.floor(inventory[t]*.2);inventory[t]-=lost}updateStats();save();},1200)}
+}
+function updateSurvival(dt){
+ if(creative)return;
+ hungerClock+=dt;regenClock+=dt;
+ if(hungerClock>12){hungerClock=0;hunger=Math.max(0,hunger-1);updateStats()}
+ if(hunger>=18&&health<20&&regenClock>4){regenClock=0;health=Math.min(20,health+1);hunger=Math.max(0,hunger-1);updateStats()}
+ if(hunger===0&&regenClock>5){regenClock=0;damagePlayer(1,'Starving')}
+}
+function updateXPOrbs(dt){
+ for(let i=xpOrbs.length-1;i>=0;i--){const o=xpOrbs[i];o.life-=dt;o.phase+=dt*4;o.mesh.position.y+=Math.sin(o.phase)*dt*.5;const dx=player.x-o.mesh.position.x,dy=player.y+.3-o.mesh.position.y,dz=player.z-o.mesh.position.z;const d=Math.hypot(dx,dy,dz);
+  if(d<1.25){collectXP(o.value);scene.remove(o.mesh);o.mesh.geometry.dispose();o.mesh.material.dispose();xpOrbs.splice(i,1);continue}
+  if(d<7){o.mesh.position.x+=dx*dt*2.4;o.mesh.position.y+=dy*dt*2.4;o.mesh.position.z+=dz*dt*2.4}
+  if(o.life<=0){scene.remove(o.mesh);o.mesh.geometry.dispose();o.mesh.material.dispose();xpOrbs.splice(i,1)}
+ }
+}
+function toast(s){const el=document.getElementById('toast');el.textContent=s;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),1700)}
+const hotbarKeys=['1','2','3','4','5','6','7','8','9'];
+function buildHotbar(){const bar=document.getElementById('hotbar');bar.innerHTML='';blockTypes.forEach((t,i)=>{const owned=creative||(inventory[t]||0)>0;const b=document.createElement('button');b.className='slot'+(owned&&t===selected?' active':'')+(owned?'':' empty');b.innerHTML='<small>'+(hotbarKeys[i]||'CLICK')+'</small>'+(owned?icons[t]:'');b.title=owned?t+' ('+(hotbarKeys[i]||'click')+')':'Empty slot';b.disabled=!owned;b.onclick=()=>select(t);bar.appendChild(b)})}
+function select(t){if(!creative&&(inventory[t]||0)<=0){toast('Empty slot — mine '+t+' first!');return}selected=t;buildHotbar();toast(t[0].toUpperCase()+t.slice(1)+' selected')}
+const recipes=[
+ {name:'Crafting Table',icon:'🪚',size:2,cost:{wood:4},out:'crafting_table',amount:1},
+ {name:'Glass ×2',icon:'🔹',size:2,cost:{sand:2},out:'glass',amount:2},
+ {name:'Brick ×4',icon:'🧱',size:2,cost:{stone:4},out:'brick',amount:4},
+ {name:'Wood Pickaxe',icon:'🪓',size:3,cost:{wood:3,stone:2},tool:1},
+ {name:'Stone Pickaxe',icon:'⛏',size:3,cost:{stone:3,wood:2},tool:2},
+ {name:'Iron Pickaxe',icon:'⚒',size:3,cost:{iron:3,wood:2},tool:3},
+ {name:'Diamond Pickaxe',icon:'💎',size:3,cost:{diamond:3,wood:2},tool:4}
+];
+function hasCraftingTableNearby(){for(let x=Math.floor(player.x)-5;x<=Math.floor(player.x)+5;x++)for(let y=Math.floor(player.y)-4;y<=Math.floor(player.y)+2;y++)for(let z=Math.floor(player.z)-5;z<=Math.floor(player.z)+5;z++)if(blocks.get(key(x,y,z))==='crafting_table')return true;return false}
+function renderCrafting(){
+ const table=hasCraftingTableNearby(),size=table?3:2,grid=document.getElementById('craftGrid');grid.style.gridTemplateColumns='repeat('+size+',42px)';grid.innerHTML='';
+ for(let i=0;i<size*size;i++){const cell=document.createElement('div');cell.style.cssText='height:42px;border:1px solid #ffffff55;border-radius:6px;background:#ffffff12;display:grid;place-items:center;color:#d8eaff;font-size:11px';cell.textContent='·';grid.appendChild(cell)}
+ document.getElementById('craftSize').textContent=table?'3×3 CRAFTING TABLE UNLOCKED':'2×2 PERSONAL CRAFTING';
+ const list=document.getElementById('craftRecipes');list.innerHTML='';
+ recipes.filter(r=>r.size<=size).forEach(r=>{const b=document.createElement('button');b.className='secondary';const cost=Object.entries(r.cost).map(([k,v])=>icons[k]+' '+v).join(' + ');const enough=creative||Object.entries(r.cost).every(([k,v])=>(inventory[k]||0)>=v);b.textContent=r.icon+' '+r.name+' — '+cost;b.disabled=!enough;b.style.opacity=enough?'1':'.45';b.onclick=()=>craftRecipe(r);list.appendChild(b)});
+}
+function craftRecipe(r){
+ if(r.size===3&&!hasCraftingTableNearby()){toast('Place a crafting table nearby first!');return}
+ if(!creative){for(const [k,v] of Object.entries(r.cost)){if((inventory[k]||0)<v){toast('Need more '+k);return}}for(const [k,v] of Object.entries(r.cost))inventory[k]-=v}
+ if(r.tool!==undefined){toolIndex=r.tool;const t=toolsList[toolIndex];document.getElementById('tool').textContent=t.icon+' '+t.name;toast('Crafted '+t.name+'!')}
+ else{inventory[r.out]=(inventory[r.out]||0)+r.amount;toast('Crafted '+r.name+'!')}
+ updateStats();save();renderCrafting();
+}
+function toggleCraft(){const p=document.getElementById('craftPanel');p.style.display=p.style.display==='none'?'block':'none';if(p.style.display==='block')renderCrafting()}
+document.getElementById('craft').onclick=toggleCraft;
+document.getElementById('tool').onclick=cycleTool;
+
+document.getElementById('mode').onclick=()=>{creative=!creative;document.getElementById('mode').textContent=creative?'Creative':'Survival';if(!creative){health=Math.min(20,health);hunger=Math.min(20,hunger)}updateStats();save();toast(creative?'Creative mode: unlimited blocks':'Survival mode: health and hunger enabled')};
+function start(){document.getElementById('menu').classList.add('hidden');paused=false;started=true;cgGameplayStart();document.getElementById('cgObjective').style.display='block';camera.position.set(player.x,player.y+0.65,player.z);if(renderer.domElement.requestPointerLock&&innerWidth>700)renderer.domElement.requestPointerLock();toast(creative?'Creative mode':'Explore, gather resources and build a shelter!')}
+function pause(){save();paused=true;cgGameplayStop();document.exitPointerLock?.();document.getElementById('menu').classList.remove('hidden');document.getElementById('play').textContent='▶ RESUME WORLD'}
+document.getElementById('play').onclick=()=>{if(!started)start();else{document.getElementById('menu').classList.add('hidden');paused=false;cgGameplayStart();if(innerWidth>700)renderer.domElement.requestPointerLock?.()}};
+document.getElementById('newWorld').onclick=()=>{generate();localStorage.removeItem('skyblocks-world');save();started=true;start();toast('New endless world generated!')};
+document.getElementById('pause').onclick=pause;
+document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===renderer.domElement});
+document.addEventListener('mousemove',e=>{if(!locked||paused)return;yaw-=e.movementX*.0022;pitch-=e.movementY*.0022;pitch=Math.max(-1.45,Math.min(1.45,pitch))});
+document.addEventListener('keydown',e=>{if(e.code==='Space')jumpHeld=true;keys[e.code]=true;const hotbarIndex=({Digit1:0,Digit2:1,Digit3:2,Digit4:3,Digit5:4,Digit6:5,Digit7:6,Digit8:7,Digit9:8})[e.code];if(hotbarIndex!==undefined&&blockTypes[hotbarIndex])select(blockTypes[hotbarIndex]);if(e.code==='Escape'&&started)pause();if(e.code==='KeyC'&&!paused)toggleCraft();if(e.code==='KeyT'&&!paused)cycleTool();if(e.code==='KeyE'&&!paused){if((inventory.food||0)>0&&hunger<20){inventory.food--;hunger=Math.min(20,hunger+6);updateStats();save();toast('🍎 Ate an apple — hunger restored')}else toast(inventory.food?'Hunger is already full':'No apples — mine leaves to find food')}});
+document.addEventListener('keyup',e=>{keys[e.code]=false;if(e.code==='Space')jumpHeld=false});
+// Clear held inputs if the browser tab loses focus, preventing stuck jump input.
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false;jumpHeld=false});
+renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
+function targetBlock(){camera.rotation.set(pitch,yaw,0,'YXZ');ray.setFromCamera(new THREE.Vector2(0,0),camera);const hit=ray.intersectObjects([...meshes.values()],false)[0];if(!hit){targetOutline.visible=false;return null}const k=hit.object.userData.blockKey||instanceKeys.get(hit.object.userData.type)?.[hit.instanceId];if(!k){targetOutline.visible=false;return null}const [x,y,z]=k.split(',').map(Number);hit.block={x,y,z,type:hit.object.userData.type};targetOutline.position.set(x,y,z);targetOutline.visible=true;return hit}
+function startMining(){ray.setFromCamera(new THREE.Vector2(0,0),camera);const animalHit=ray.intersectObjects(animals.filter(a=>a.kind==='sheep'&&!a.sheared).map(a=>a.group),true)[0];if(animalHit){const animal=animals.find(a=>a.group===animalHit.object||a.group===animalHit.object.parent||a.group===animalHit.object.parent?.parent);if(animal&&!animal.sheared){animal.sheared=true;animal.group.children.forEach(part=>{part.material=new THREE.MeshLambertMaterial({color:0x8b8174})});inventory.glider=(inventory.glider||0)+1;toast('🪂 Glider collected! +1');updateStats();save()}return}const hit=targetBlock();if(!hit)return;const p=hit.block;if(p.y<=-6){toast('Bedrock is unbreakable!');return}mining={key:key(p.x,p.y,p.z),elapsed:0};}
+function stopMining(){mining=null;mineStatus.style.display='none';}
+function breakMinedBlock(p){if(!removeBlock(p.x,p.y,p.z))return;if(!creative&&blockTypes.includes(p.type))inventory[p.type]=(inventory[p.type]||0)+1;if(!creative&&p.type==='leaves'&&Math.random()<.3){inventory.food=(inventory.food||0)+1;toast('🍎 Found an apple! Press E to eat')}if(['coal','iron','gold_block','diamond'].includes(p.type))gainXP(p.type==='diamond'?5:p.type==='gold_block'?3:p.type==='iron'?2:1,p.x,p.y,p.z);updateStats();save();stopMining();}
+renderer.domElement.addEventListener('mousedown',e=>{if(paused)return;if(!locked&&innerWidth>700){renderer.domElement.requestPointerLock?.();return}if(e.button===0){startMining();return}const hit=targetBlock();if(!hit)return;const p=hit.block;if(e.button===2){if(selected==='glider'){toast('🪂 Select the glider, then hold Space while falling to glide!');return}const n=hit.face.normal;const x=p.x+Math.round(n.x),y=p.y+Math.round(n.y),z=p.z+Math.round(n.z);if(y>-6&&y<48&&!(Math.abs(x-player.x)<.8&&Math.abs(z-player.z)<.8&&y>player.y-1&&y<player.y+1)){if((creative||inventory[selected]>0)&&addBlock(x,y,z,selected)){if(!creative)inventory[selected]--;updateStats();save()}else if(!creative)toast('No '+selected+' blocks left — mine some first!')}}});
+renderer.domElement.addEventListener('touchstart',e=>{if(paused)return;startMining()},{passive:true});
+renderer.domElement.addEventListener('touchend',stopMining);
+document.addEventListener('mouseup',e=>{if(e.button===0)stopMining()});
+document.querySelectorAll('#mobile button').forEach(b=>{const k=b.dataset.move;const map={forward:'KeyW',back:'KeyS',left:'KeyA',right:'KeyD',jump:'Space'};b.addEventListener('touchstart',e=>{e.preventDefault();if(map[k]==='Space')jumpHeld=true;keys[map[k]]=true});b.addEventListener('touchend',e=>{e.preventDefault();keys[map[k]]=false;if(map[k]==='Space')jumpHeld=false});b.addEventListener('touchcancel',e=>{keys[map[k]]=false;if(map[k]==='Space')jumpHeld=false})});
+// Player collision: player.y is the eye-height reference; body extends 1.05 down and .65 up.
+const PLAYER_RADIUS=.31, PLAYER_BOTTOM=1.05, PLAYER_TOP=.65;
+function bodyCollides(x,eyeY,z){
+ const minX=Math.floor(x-PLAYER_RADIUS+.5),maxX=Math.floor(x+PLAYER_RADIUS+.5);
+ const minZ=Math.floor(z-PLAYER_RADIUS+.5),maxZ=Math.floor(z+PLAYER_RADIUS+.5);
+ const minY=Math.floor(eyeY-PLAYER_BOTTOM+.5),maxY=Math.floor(eyeY+PLAYER_TOP+.5);
+ for(let bx=minX;bx<=maxX;bx++)for(let bz=minZ;bz<=maxZ;bz++)for(let by=minY;by<=maxY;by++){
+  if(blocks.has(key(bx,by,bz))&&blocks.get(key(bx,by,bz))!=='flower')return true;
+ }
+ return false;
+}
+function moveAxis(axis,amount){
+ const steps=Math.max(1,Math.ceil(Math.abs(amount)/.12)),step=amount/steps;
+ for(let i=0;i<steps;i++){
+  const nx=player.x+(axis==='x'?step:0),nz=player.z+(axis==='z'?step:0);
+  if(!bodyCollides(nx,player.y,nz)){player.x=nx;player.z=nz;continue;}
+  // Solid blocks, including glass, stop horizontal movement.
+  // Do not auto-step over a one-block wall; jumping must be intentional.
+  break;
+ }
+}
+let fpsFrames=0,fpsTime=0;function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.04);fpsFrames++;fpsTime+=dt;if(fpsTime>=.5){const f=Math.round(fpsFrames/fpsTime);fpsFrames=0;fpsTime=0;document.title='SKYENGINE · '+f+' FPS'}if(!paused){if(multiplayerSocket&&multiplayerSocket.readyState===WebSocket.OPEN){networkSendClock+=dt;if(networkSendClock>=.1){networkSendClock=0;sendNetwork({type:'player',x:player.x,y:player.y,z:player.z,yaw,name:sessionStorage.getItem('skyengine-player-name')||'Player'})}}if(mining){const hit=targetBlock();const p=hit?.block;const pickaxeBlocks=['stone','coal','iron','gold_block','diamond','brick'];const usesPickaxe=pickaxeBlocks.includes(p?.type);const tool=toolsList[toolIndex];const speed=usesPickaxe?tool.power:1;const needed=p?Math.max(.1,(mineSeconds[p.type]??3)/speed):3;if(!p||key(p.x,p.y,p.z)!==mining.key){stopMining()}else{mining.elapsed+=dt;const left=Math.max(0,needed-mining.elapsed);mineStatus.style.display='block';mineStatus.textContent='⛏ '+p.type.toUpperCase()+' · '+Math.ceil(left)+'s';if(mining.elapsed>=needed)breakMinedBlock(p)}}worldTime=(worldTime+dt*.018)%(Math.PI*2);const daylight=Math.max(.12,Math.sin(worldTime)*.5+.5);sun.intensity=.35+daylight*2.0;scene.background.setHSL(.56,.55,.25+daylight*.28);scene.fog.color.copy(scene.background);sun.position.set(Math.cos(worldTime)*28,Math.max(5,Math.sin(worldTime)*35),12);camera.rotation.set(pitch,yaw,0,'YXZ');const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));const move=new THREE.Vector3();if(keys.KeyW||keys.ArrowUp)move.add(forward);if(keys.KeyS||keys.ArrowDown)move.sub(forward);if(keys.KeyD||keys.ArrowRight)move.add(right);if(keys.KeyA||keys.ArrowLeft)move.sub(right);if(move.lengthSq())move.normalize().multiplyScalar((keys.ShiftLeft||keys.ShiftRight?9:6)*dt);moveAxis('x',move.x);moveAxis('z',move.z);updateChunks();
+ // Jump and gravity with voxel collision on the player's full body.
+ if(jumpHeld&&onGround){velocityY=7.5;onGround=false;lastFallY=player.y}
+ const gliding=selected==='glider'&&!onGround&&jumpHeld&&velocityY<0;
+ if(gliding){velocityY=Math.max(velocityY,-2.1);const glideForward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));moveAxis('x',glideForward.x*dt*2.2);moveAxis('z',glideForward.z*dt*2.2);}
+ if(onGround)lastFallY=player.y;
+ velocityY-=19*dt;
+ const nextY=player.y+velocityY*dt;
+ if(!bodyCollides(player.x,nextY,player.z)){
+  player.y=nextY;onGround=false;
+ }else if(velocityY<0){
+  // Land on the highest block directly beneath the player's feet.
+  const bx0=Math.floor(player.x-PLAYER_RADIUS+.5),bx1=Math.floor(player.x+PLAYER_RADIUS+.5);
+  const bz0=Math.floor(player.z-PLAYER_RADIUS+.5),bz1=Math.floor(player.z+PLAYER_RADIUS+.5);
+  let landingTop=-5.5;
+  for(let bx=bx0;bx<=bx1;bx++)for(let bz=bz0;bz<=bz1;bz++){
+   for(let by=Math.floor(player.y-PLAYER_BOTTOM+.5);by>=-6;by--){
+    if(blocks.has(key(bx,by,bz))){landingTop=Math.max(landingTop,by+.5);break;}
+   }
+  }
+  const fallDistance=lastFallY-nextY;
+  if(!onGround&&fallDistance>4)damagePlayer(Math.min(20,Math.floor(fallDistance-3)),'Fall');
+  player.y=landingTop+PLAYER_BOTTOM;velocityY=0;onGround=true;
+ }else{
+  velocityY=0;
+ }updateSurvival(dt);updateXPOrbs(dt);camera.position.set(player.x,player.y+.35,player.z);camera.rotation.set(pitch,yaw,0,'YXZ');const moving=move.lengthSq()>0;const bob=moving?Math.sin(performance.now()*.012)*.025:0;viewArm.position.y=bob;viewArm.rotation.x=moving?Math.sin(performance.now()*.012)*.035:0;heldBlock.visible=selected!=='glider'&&(creative||inventory[selected]>0);heldBlock.material=Array.isArray(mats[selected])?mats[selected][2]:(mats[selected]||mats.grass);for(const a of animals){a.phase+=dt*a.speed;a.group.position.x+=Math.sin(a.phase)*dt*.35;a.group.position.z+=Math.cos(a.phase*.7)*dt*.25;a.group.position.x=Math.max(-28,Math.min(28,a.group.position.x));a.group.position.z=Math.max(-28,Math.min(28,a.group.position.z));a.group.position.y=heightAt(Math.round(a.group.position.x),Math.round(a.group.position.z))+.5;a.group.rotation.y=Math.sin(a.phase)*.25} }renderer.render(scene,camera)}
+const clock=new THREE.Clock();generate();if(!load())save();buildHotbar();tick();
+if(CG_RELEASE_BUILD){document.getElementById('menu').classList.add('show');document.getElementById('play').textContent='▶ START EXPLORING';}
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,1));renderer.setSize(innerWidth,innerHeight)});
+// Autosave your location and world edits while you play.
+setInterval(()=>{if(started&&!paused)save()},5000);
+addEventListener('beforeunload',save);
+</script>
+</body>
+</html>
