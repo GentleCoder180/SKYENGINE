@@ -186,7 +186,7 @@ const mats={
  leaves:new THREE.MeshLambertMaterial({map:pixelTexture('#258b35','#145524','leaves')}),
  sand:new THREE.MeshLambertMaterial({map:pixelTexture('#e5cc7c','#b99a4d','sand')}),
  brick:new THREE.MeshLambertMaterial({map:pixelTexture('#bd5540','#753b32','brick')}),
- glass:new THREE.MeshLambertMaterial({color:0x9ce8f5,transparent:true,opacity:.38,depthWrite:false}),
+ glass:new THREE.MeshLambertMaterial({color:0x9ce8f5,transparent:true,opacity:.48,depthWrite:true,side:THREE.DoubleSide}),
  wool:new THREE.MeshLambertMaterial({map:pixelTexture('#f1eee5','#b8b2a7','wool')}),
  crafting_table:new THREE.MeshLambertMaterial({map:pixelTexture('#9a6338','#e2b36c','wood')}),
  flower:new THREE.MeshLambertMaterial({color:0xf3a6cb}),
@@ -228,8 +228,23 @@ function syncRender(){
   }
   if(type==='flower'){
    entries.forEach(([k,x,y,z])=>{
-    const bloom=new THREE.Mesh(new THREE.OctahedronGeometry(.22,0),mats.flower);
-    bloom.position.set(x,y+.2,z);bloom.userData.type='flower';bloom.userData.blockKey=k;
+    // Small recognizable flower: thin green stem, five rounded petals, yellow center.
+    const bloom=new THREE.Group();
+    const stem=new THREE.Mesh(new THREE.CylinderGeometry(.025,.035,.28,5),new THREE.MeshLambertMaterial({color:0x398b38}));
+    stem.position.y=.14;bloom.add(stem);
+    const leaf=new THREE.Mesh(new THREE.SphereGeometry(.075,5,4),new THREE.MeshLambertMaterial({color:0x4fae45}));
+    leaf.scale.set(1,.35,.7);leaf.position.set(.065,.13,0);bloom.add(leaf);
+    const petalMat=new THREE.MeshLambertMaterial({color:0xf28bb8});
+    for(let i=0;i<5;i++){
+     const angle=i*Math.PI*2/5;
+     const petal=new THREE.Mesh(new THREE.SphereGeometry(.085,6,5),petalMat);
+     petal.position.set(Math.cos(angle)*.105,.34,Math.sin(angle)*.105);
+     petal.scale.set(1,.62,1);bloom.add(petal);
+    }
+    const center=new THREE.Mesh(new THREE.SphereGeometry(.055,6,5),new THREE.MeshLambertMaterial({color:0xffd84d}));
+    center.position.y=.35;bloom.add(center);
+    bloom.position.set(x,y,z);
+    bloom.traverse(part=>{if(part.isMesh){part.userData.type='flower';part.userData.blockKey=k}});
     scene.add(bloom);meshes.set('flower:'+k,bloom);
    });
    continue;
