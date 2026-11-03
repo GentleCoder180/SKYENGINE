@@ -123,7 +123,7 @@ document.getElementById('singleplayer').addEventListener('click',()=>{document.g
 document.getElementById('joinMultiplayer').addEventListener('click',()=>{document.getElementById('modeSelect').style.display='none';document.getElementById('multiplayerInfo').style.display='grid'});
 document.getElementById('backToModes').addEventListener('click',()=>{document.getElementById('multiplayerInfo').style.display='none';document.getElementById('modeSelect').style.display='grid'});
 
-const GAME_API=MULTIPLAYER_SERVER;
+const GAME_API='https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev';
 // Catalog is loaded when the player reaches the SKYENGINE home screen.
 
 let currentGameMode='survival';
