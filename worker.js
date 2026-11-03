@@ -5,6 +5,15 @@ export class GameRoom extends DurableObject {
     super(ctx, env);
   }
 
+  async fetch(request) {
+    if (request.headers.get("Upgrade") !== "websocket") {
+      return new Response("WebSocket connection required.", { status: 426 });
+    }
+    const pair = new WebSocketPair();
+    this.ctx.acceptWebSocket(pair[1]);
+    return new Response(null, { status: 101, webSocket: pair[0] });
+  }
+
   sockets() {
     return this.ctx.getWebSockets();
   }
@@ -99,12 +108,3 @@ export default {
   }
 };
 
-export class RoomSocket extends DurableObject {
-  async fetch(request) {
-    const pair = new WebSocketPair();
-    const client = pair[0];
-    const server = pair[1];
-    this.ctx.acceptWebSocket(server);
-    return new Response(null, { status: 101, webSocket: client });
-  }
-}
