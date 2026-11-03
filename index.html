@@ -48,8 +48,24 @@ button{font:inherit}#menu{position:fixed;inset:0;display:grid;place-items:center
  </div>
 </div>
 <div id="loginGate"><form class="panel login-card" id="loginForm"><h1 class="logo">SKY<span>ENGINE</span></h1><p class="tagline" id="authSubtitle">Log in to your account</p><div class="auth-tabs"><button class="secondary active" id="loginTab" type="button">LOG IN</button><button class="secondary" id="signInTab" type="button">SIGN IN</button></div><input id="loginName" autocomplete="username" placeholder="Account name" maxlength="24" required><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password (at least 6 characters)" minlength="6" required><div id="loginError" role="status"></div><button class="primary auth-submit" id="authSubmit" type="submit">LOG IN</button><p class="video-note">Accounts are saved only in this browser and are not protected by a secure online account server.</p></form></div>
-<div id="modeSelect"><div class="panel menu-card"><h1 class="logo">SKY<span>ENGINE</span></h1><p class="tagline">CHOOSE YOUR WORLD</p><div class="actions"><button class="primary" id="joinMultiplayer">🌐 JOIN MULTIPLAYER</button><button class="secondary" id="singleplayer">⛏ SINGLEPLAYER</button></div></div></div>
-<div id="multiplayerInfo"><div class="panel menu-card"><h1 class="logo">MULTI<span>PLAYER</span></h1><p class="tagline">Create a room code and share it with your friend. Both players must use the same code.</p><input id="roomCode" maxlength="16" placeholder="Room code (example: SKY123)" style="display:block;width:100%;margin:12px 0;padding:13px;border-radius:9px;border:1px solid var(--line);background:#081426;color:#fff;font:inherit;text-align:center;text-transform:uppercase"><p id="networkStatus" class="video-note">Server setup required before rooms can connect.</p><div class="actions"><button class="primary" id="connectMultiplayer">CONNECT TO ROOM</button><button class="secondary" id="disconnectMultiplayer" style="display:none">DISCONNECT</button><button class="secondary" id="backToModes">← BACK</button></div><p class="video-note">Room codes are not passwords. Only share them with people you want in your world.</p></div></div>
+<div id="modeSelect"><div class="panel menu-card"><h1 class="logo">SKY<span>ENGINE</span></h1><p class="tagline">CHOOSE YOUR WORLD</p><div class="actions"><button class="primary" id="joinMultiplayer">🌐 JOIN MULTIPLAYER</button><button class="secondary" id="singleplayer">⛏ SINGLEPLAYER</button><button class="secondary" id="openAdmin">⚙ ADMIN</button></div></div></div>
+<div id="multiplayerInfo"><div class="panel menu-card" style="width:min(760px,100%);max-height:88vh;overflow:auto">
+ <h1 class="logo">SKY<span>HUB</span></h1><p class="tagline">PLAY TOGETHER · PICK A GAME OR CREATE YOUR OWN</p>
+ <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;text-align:left;margin:14px 0">
+  <button class="secondary" data-preset="survival"><b>🌲 SURVIVAL</b><br><small>Explore, mine, build and survive</small></button>
+  <button class="secondary" data-preset="creative"><b>🏗 CREATIVE BUILD</b><br><small>Unlimited blocks and free building</small></button>
+  <button class="secondary" data-preset="parkour"><b>🏃 PARKOUR</b><br><small>Jump across a challenge course</small></button>
+ </div>
+ <div class="panel" style="padding:14px;text-align:left;margin:12px 0"><b>＋ CREATE A CUSTOM GAME</b>
+  <input id="customGameName" maxlength="28" placeholder="Game name" style="display:block;width:100%;margin:9px 0;padding:11px;border-radius:9px;border:1px solid var(--line);background:#081426;color:#fff;font:inherit">
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><select id="customGameMode" style="flex:1;min-width:160px;padding:10px;border-radius:9px;background:#081426;color:#fff"><option value="survival">Survival</option><option value="creative">Creative Build</option><option value="parkour">Parkour</option></select><button class="primary" id="createCustomGame">CREATE ROOM</button></div>
+ </div>
+ <div style="text-align:left;margin:14px 0"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><b>🌐 PUBLIC GAMES</b><button class="secondary" id="refreshGames">↻ REFRESH</button></div><div id="publicGames" style="display:grid;gap:8px;margin-top:10px"><p class="video-note">Loading public games…</p></div></div>
+ <div class="panel" style="padding:12px;text-align:left"><b>JOIN BY ROOM CODE</b><div style="display:flex;gap:8px;margin-top:8px"><input id="roomCode" maxlength="16" placeholder="ROOM CODE" style="min-width:0;flex:1;padding:11px;border-radius:9px;border:1px solid var(--line);background:#081426;color:#fff"><button class="primary" id="connectMultiplayer">JOIN</button></div></div>
+ <p id="networkStatus" class="video-note">Server setup required before public rooms can connect.</p>
+ <div class="actions"><button class="secondary" id="disconnectMultiplayer" style="display:none">DISCONNECT</button><button class="secondary" id="backToModes">← BACK</button></div>
+ </div></div>
+<div id="adminPanel" style="position:fixed;inset:0;z-index:22;display:none;place-items:center;padding:18px;background:#071426ee"><div class="panel menu-card" style="width:min(430px,100%)"><h1 class="logo">SKY<span>ADMIN</span></h1><p class="tagline">ADMIN SIGN IN</p><input id="adminName" placeholder="Admin username" autocomplete="username" style="display:block;width:100%;margin:9px 0;padding:12px;border-radius:9px;border:1px solid var(--line);background:#081426;color:#fff"><input id="adminPassword" type="password" placeholder="Admin password" autocomplete="current-password" style="display:block;width:100%;margin:9px 0;padding:12px;border-radius:9px;border:1px solid var(--line);background:#081426;color:#fff"><p id="adminStatus" class="video-note"></p><div class="actions"><button class="primary" id="adminLogin">SIGN IN</button><button class="secondary" id="closeAdmin">CLOSE</button></div><div id="adminTools" style="display:none;text-align:left;margin-top:15px"><b>ADMIN TOOLS</b><p class="video-note">Remove a room from the public games list.</p><div id="adminGameList"></div></div></div></div>
 <div id="menu"><div class="panel menu-card"><h1 class="logo">SKY<span>ENGINE</span></h1><div class="tagline">INFINITE VOXEL WORLD · BUILD · EXPLORE · SURVIVE</div><div class="actions"><button class="primary" id="play">▶ PLAY WORLD</button><button class="secondary" id="newWorld">＋ NEW WORLD</button></div><div class="instructions"><b>Explore</b> a world that generates new land as you travel. Build a home, make a garden, or reshape the landscape.<br><b>Desktop:</b> WASD move · Shift sprint · mouse look · Space jump · left click mine · right click place.<br><b>Mobile:</b> use the movement pad and tap blocks to interact.<br><b>Tip:</b> Your world saves automatically in this browser.</div></div></div>
 <script>
 (function(){
@@ -97,6 +113,58 @@ button{font:inherit}#menu{position:fixed;inset:0;display:grid;place-items:center
 document.getElementById('singleplayer').addEventListener('click',()=>{document.getElementById('modeSelect').style.display='none';document.getElementById('menu').classList.add('show')});
 document.getElementById('joinMultiplayer').addEventListener('click',()=>{document.getElementById('modeSelect').style.display='none';document.getElementById('multiplayerInfo').style.display='grid'});
 document.getElementById('backToModes').addEventListener('click',()=>{document.getElementById('multiplayerInfo').style.display='none';document.getElementById('modeSelect').style.display='grid'});
+
+const GAME_API=MULTIPLAYER_SERVER;
+let currentGameMode='survival';
+const modeLabels={survival:'Survival',creative:'Creative Build',parkour:'Parkour'};
+async function apiRequest(path,options={}){
+ const response=await fetch(GAME_API+path,{...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});
+ const data=await response.json().catch(()=>({error:'Invalid server response'}));
+ if(!response.ok)throw new Error(data.error||'Server request failed');
+ return data;
+}
+function escapeText(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+async function refreshPublicGames(){
+ const box=document.getElementById('publicGames');
+ if(GAME_API.includes('YOUR-WORKER')){box.innerHTML='<p class="video-note">Deploy the Cloudflare Worker and add its URL to index.html to load public games.</p>';return}
+ box.innerHTML='<p class="video-note">Loading…</p>';
+ try{
+  const data=await apiRequest('/api/games');
+  if(!data.games.length){box.innerHTML='<p class="video-note">No public rooms yet. Start one above!</p>';return}
+  box.innerHTML=data.games.map(g=>'<div class="panel" style="padding:11px;display:flex;justify-content:space-between;align-items:center;gap:10px"><div><b>'+escapeText(g.name)+'</b><div class="video-note">'+escapeText(modeLabels[g.mode]||g.mode)+' · Code: '+escapeText(g.id)+'</div></div><button class="primary" data-join-room="'+escapeText(g.id)+'">JOIN</button></div>').join('');
+  box.querySelectorAll('[data-join-room]').forEach(b=>b.addEventListener('click',()=>{document.getElementById('roomCode').value=b.dataset.joinRoom;connectMultiplayer()}));
+ }catch(e){box.innerHTML='<p class="video-note">'+escapeText(e.message)+'</p>'}
+}
+async function createPublicGame(name,mode){
+ try{
+  const data=await apiRequest('/api/games',{method:'POST',body:JSON.stringify({name,mode,owner:sessionStorage.getItem('skyengine-player-name')||'Player'})});
+  document.getElementById('roomCode').value=data.game.id;currentGameMode=mode;networkStatus('Room created: '+data.game.id+' · connecting…');await refreshPublicGames();connectMultiplayer();
+ }catch(e){networkStatus(e.message)}
+}
+document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{const mode=b.dataset.preset;createPublicGame(modeLabels[mode]+' Room',mode)}));
+document.getElementById('createCustomGame').addEventListener('click',()=>{const name=document.getElementById('customGameName').value.trim();if(name.length<3){networkStatus('Game name must be at least 3 characters.');return}createPublicGame(name,document.getElementById('customGameMode').value)});
+document.getElementById('refreshGames').addEventListener('click',refreshPublicGames);
+document.getElementById('joinMultiplayer').addEventListener('click',()=>refreshPublicGames());
+document.getElementById('openAdmin').addEventListener('click',()=>{document.getElementById('adminPanel').style.display='grid';document.getElementById('adminTools').style.display='none';document.getElementById('adminStatus').textContent=''});
+document.getElementById('closeAdmin').addEventListener('click',()=>document.getElementById('adminPanel').style.display='none');
+document.getElementById('adminLogin').addEventListener('click',async()=>{
+ const username=document.getElementById('adminName').value.trim(),password=document.getElementById('adminPassword').value;
+ const status=document.getElementById('adminStatus');status.textContent='Checking…';
+ try{
+  const data=await apiRequest('/api/admin/login',{method:'POST',body:JSON.stringify({username,password})});
+  if(!data.ok)throw new Error('Sign-in failed');
+  sessionStorage.setItem('skyengine-admin-session','yes');
+  document.getElementById('adminTools').style.display='block';status.textContent='Admin verified. Public room controls are ready.';
+  await loadAdminGames(username,password);
+ }catch(e){status.textContent=e.message}
+});
+async function loadAdminGames(username,password){
+ const data=await apiRequest('/api/games');
+ const box=document.getElementById('adminGameList');
+ box.innerHTML=data.games.length?data.games.map(g=>'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #ffffff22"><span>'+escapeText(g.name)+' · '+escapeText(g.id)+'</span><button class="secondary" data-remove-game="'+escapeText(g.id)+'">REMOVE</button></div>').join(''):'<p class="video-note">No public rooms.</p>';
+ box.querySelectorAll('[data-remove-game]').forEach(b=>b.addEventListener('click',async()=>{try{await apiRequest('/api/admin/remove',{method:'POST',headers:{'X-Admin-Name':username,'X-Admin-Password':password},body:JSON.stringify({id:b.dataset.removeGame})});await loadAdminGames(username,password);await refreshPublicGames()}catch(e){document.getElementById('adminStatus').textContent=e.message}}));
+}
+
 </script>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
@@ -295,11 +363,13 @@ function connectMultiplayer(){
  if(MULTIPLAYER_SERVER.includes('YOUR-WORKER')){networkStatus('Server not deployed yet. Follow the Cloudflare setup steps first.');return}
  disconnectMultiplayer('Connecting…');multiplayerRoom=room;
  const url=new URL(MULTIPLAYER_SERVER);url.protocol=url.protocol==='https:'?'wss:':'ws:';url.pathname='/room/'+encodeURIComponent(room);
+ const gameMode=currentGameMode;url.searchParams.set('mode',gameMode);
  const socket=new WebSocket(url);multiplayerSocket=socket;
  socket.onopen=()=>{const name=sessionStorage.getItem('skyengine-player-name')||'Player';sendNetwork({type:'join',name});networkStatus('Connected to room '+room+' — waiting for world sync…');document.getElementById('disconnectMultiplayer').style.display='inline-block';document.getElementById('connectMultiplayer').style.display='none';document.getElementById('multiplayerInfo').style.display='none';document.getElementById('menu').classList.add('show')};
  socket.onmessage=e=>{
   let msg;try{msg=JSON.parse(e.data)}catch{return}
   if(msg.type==='welcome'){
+   currentGameMode=msg.game?.mode||currentGameMode;creative=currentGameMode==='creative';document.getElementById('mode').textContent=creative?'Creative':'Survival';
    (msg.players||[]).forEach(p=>{if(p.id!==msg.id)makeRemotePlayer(p.id,p.name,p.x,p.y,p.z)});
    (msg.edits||[]).forEach(edit=>applyRemoteBlock(edit.key,edit.block));
    networkStatus('In room '+room+' · '+((msg.players||[]).length+1)+' player(s) online');
