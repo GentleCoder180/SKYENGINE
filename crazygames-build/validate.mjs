@@ -20,7 +20,7 @@ for (const marker of required) {
     process.exit(1);
   }
 }
-const modules = [...html.matchAll(/<script type="module">([\\s\\S]*?)<\\/script>/g)];
+const modules = [...html.matchAll(/<script type="module">([\s\S]*?)<\/script>/g)];
 if (modules.length !== 1) {
   console.error("Expected exactly one game module script; found", modules.length);
   process.exit(1);
