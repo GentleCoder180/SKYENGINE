@@ -226,17 +226,26 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.m
 // CrazyGames release build: guest-first, no external account gate or creator portal.
 const CG_RELEASE_BUILD = true;
 let cgSdkInitialized = false;
-(async function initializeCrazyGames(){
+const cgSdkInitPromise = (async function initializeCrazyGames(){
  try{
   if(window.CrazyGames?.SDK){
    await window.CrazyGames.SDK.init();
    cgSdkInitialized = true;
    console.info('CrazyGames SDK initialized');
-  }else{
-   console.warn('CrazyGames SDK unavailable; local preview continues without platform services.');
+   return true;
   }
+  console.warn('CrazyGames SDK unavailable; local preview continues without platform services.');
  }catch(error){console.warn('CrazyGames SDK initialization failed; local preview continues.',error)}
+ return false;
 })();
+function readWorldSave(){
+ if(cgSdkInitialized){try{const value=window.CrazyGames.SDK.data.getItem('skyengine-world-v1');if(value!==null)return value}catch(error){console.warn('Cloud save read failed; using local save.',error)}}
+ return localStorage.getItem('skyblocks-world');
+}
+function writeWorldSave(value){
+ if(cgSdkInitialized){try{window.CrazyGames.SDK.data.setItem('skyengine-world-v1',value);return}catch(error){console.warn('Cloud save write failed; using local save.',error)}}
+ localStorage.setItem('skyblocks-world',value);
+}
 function cgGameplayStart(){
  try{if(cgSdkInitialized)window.CrazyGames.SDK.game.gameplayStart()}catch(error){console.warn('CrazyGames gameplayStart failed',error)}
 }
@@ -575,8 +584,8 @@ function generate(){
  buildVillageAndMine();preserveVillage();spawnAnimals();syncRender();updateStats();
 }
 function updateStats(){buildHotbar();document.getElementById('stats').innerHTML='WORLD: Endless Meadow<br>♥ '+health+'/20　🍗 '+hunger+'/20　🍎 '+(inventory.food||0)+'　✨ Lv '+level+' ('+xp+' XP)<br>BLOCKS: '+placed+' placed';document.getElementById('inventory').textContent=blockTypes.map(t=>icons[t]+' '+(creative?'∞':inventory[t])).join('　')}
-function save(){const data={edits:[...worldEdits.entries()],player,selected,inventory,creative,health,hunger,xp,level};try{localStorage.setItem('skyblocks-world',JSON.stringify(data))}catch(e){toast('Could not save in this browser')}}
-function load(){try{const d=JSON.parse(localStorage.getItem('skyblocks-world'));if(!d?.edits)return false;worldEdits.clear();for(const [k,v] of d.edits)worldEdits.set(k,v);Object.assign(player,d.player||{});selected=d.selected||'grass';if(d.inventory)Object.assign(inventory,d.inventory);creative=d.creative??false;health=d.health??20;hunger=d.hunger??20;xp=d.xp??0;level=d.level??0;lastChunkX=Infinity;lastChunkZ=Infinity;updateChunks(true);if(player.x===undefined||player.z===undefined){player.x=0;player.z=7;player.y=heightAt(0,7)+2}buildVillageAndMine();for(const [k,v] of worldEdits){if(v===null)blocks.delete(k);else blocks.set(k,v)}spawnAnimals();syncRender();document.getElementById('mode').textContent=creative?'Creative':'Survival';updateStats();return true}catch(e){return false}}
+function save(){const data={edits:[...worldEdits.entries()],player,selected,inventory,creative,health,hunger,xp,level};try{writeWorldSave(JSON.stringify(data))}catch(e){toast('Could not save progress in this browser')}}
+function load(){try{const d=JSON.parse(readWorldSave());if(!d?.edits)return false;worldEdits.clear();for(const [k,v] of d.edits)worldEdits.set(k,v);Object.assign(player,d.player||{});selected=d.selected||'grass';if(d.inventory)Object.assign(inventory,d.inventory);creative=d.creative??false;health=d.health??20;hunger=d.hunger??20;xp=d.xp??0;level=d.level??0;lastChunkX=Infinity;lastChunkZ=Infinity;updateChunks(true);if(player.x===undefined||player.z===undefined){player.x=0;player.z=7;player.y=heightAt(0,7)+2}buildVillageAndMine();for(const [k,v] of worldEdits){if(v===null)blocks.delete(k);else blocks.set(k,v)}spawnAnimals();syncRender();document.getElementById('mode').textContent=creative?'Creative':'Survival';updateStats();return true}catch(e){return false}}
 function spawnAnimals(){
  animals.forEach(a=>scene.remove(a.group));animals=[];
  const kinds=['sheep','sheep','cow','cow','pig','pig','chicken','chicken','zombie','skeleton','iron_golem','iron_golem'];
@@ -717,6 +726,16 @@ let fpsFrames=0,fpsTime=0;function tick(){requestAnimationFrame(tick);const dt=M
  }else{
   velocityY=0;
  }updateSurvival(dt);updateXPOrbs(dt);camera.position.set(player.x,player.y+.35,player.z);camera.rotation.set(pitch,yaw,0,'YXZ');const moving=move.lengthSq()>0;const bob=moving?Math.sin(performance.now()*.012)*.025:0;viewArm.position.y=bob;viewArm.rotation.x=moving?Math.sin(performance.now()*.012)*.035:0;heldBlock.visible=selected!=='glider'&&(creative||inventory[selected]>0);heldBlock.material=Array.isArray(mats[selected])?mats[selected][2]:(mats[selected]||mats.grass);for(const a of animals){a.phase+=dt*a.speed;a.group.position.x+=Math.sin(a.phase)*dt*.35;a.group.position.z+=Math.cos(a.phase*.7)*dt*.25;a.group.position.x=Math.max(-28,Math.min(28,a.group.position.x));a.group.position.z=Math.max(-28,Math.min(28,a.group.position.z));a.group.position.y=heightAt(Math.round(a.group.position.x),Math.round(a.group.position.z))+.5;a.group.rotation.y=Math.sin(a.phase)*.25} }renderer.render(scene,camera)}
+await cgSdkInitPromise;
+if(cgSdkInitialized){
+ try{
+  const sdkData=window.CrazyGames.SDK.data;
+  if(sdkData.getItem('skyengine-world-v1')===null){
+   const legacySave=localStorage.getItem('skyblocks-world');
+   if(legacySave!==null)sdkData.setItem('skyengine-world-v1',legacySave);
+  }
+ }catch(error){console.warn('Progress-save module unavailable; local save will be used.',error)}
+}
 const clock=new THREE.Clock();generate();if(!load())save();buildHotbar();tick();
 if(CG_RELEASE_BUILD){document.getElementById('menu').classList.add('show');document.getElementById('play').textContent='▶ START EXPLORING';}
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,1));renderer.setSize(innerWidth,innerHeight)});
