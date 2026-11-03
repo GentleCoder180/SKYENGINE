@@ -13,3 +13,6 @@ class_name = "Lobby"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["GameRoom", "Lobby"]
+
+[ai]
+binding = "AI"
