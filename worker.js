@@ -14,6 +14,8 @@ export class Lobby extends DurableObject {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
     const url = new URL(request.url);
     const games = await this.ctx.storage.get("games") || {};
+    const submissions = await this.ctx.storage.get("submissions") || {};
+    const published = await this.ctx.storage.get("published") || {};
     if (url.pathname === "/api/games" && request.method === "GET") {
       return json({ games: Object.values(games).sort((a,b) => b.createdAt-a.createdAt) });
     }
@@ -34,6 +36,55 @@ export class Lobby extends DurableObject {
         method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({name,mode})
       });
       return json({game},201);
+    }
+    if (url.pathname === "/api/catalog" && request.method === "GET") {
+      return json({ games: Object.values(published).sort((a,b)=>(b.approvedAt||0)-(a.approvedAt||0)) });
+    }
+    if (url.pathname === "/api/submit" && request.method === "POST") {
+      let body; try { body = await request.json(); } catch { return json({error:"Invalid request"},400); }
+      const title=String(body.title||"").trim().replace(/[<>]/g,"").slice(0,40);
+      const description=String(body.description||"").trim().replace(/[<>]/g,"").slice(0,500);
+      const category=String(body.category||"").toLowerCase();
+      const kind=String(body.kind||"world");
+      const owner=String(body.owner||"Player").replace(/[^a-zA-Z0-9 _-]/g,"").slice(0,24)||"Player";
+      const payload=String(body.payload||"");
+      const categories=new Set(["adventure","survival","creative","parkour","minigames","roleplay","puzzle","racing","other"]);
+      if(title.length<3||description.length<10||!categories.has(category)||!["world","game"].includes(kind)||payload.length<2||payload.length>50000)
+        return json({error:"Check the title, description, category and project data (maximum 50 KB)."},400);
+      if(Object.keys(submissions).length>=500)return json({error:"The review queue is full. Try again later."},429);
+      const id=crypto.randomUUID().slice(0,8).toUpperCase();
+      submissions[id]={id,title,description,category,kind,owner,payload,status:"pending",submittedAt:Date.now()};
+      await this.ctx.storage.put("submissions",submissions);
+      return json({ok:true,id,status:"pending"},201);
+    }
+    if (url.pathname === "/api/like" && request.method === "POST") {
+      let body; try { body = await request.json(); } catch { return json({error:"Invalid request"},400); }
+      const id=String(body.id||"").toUpperCase(), player=String(body.player||"").trim().slice(0,24);
+      if(!published[id])return json({error:"Published game not found."},404);
+      if(!player)return json({error:"Log in first."},400);
+      const liked=published[id].likedBy||[];
+      if(liked.includes(player.toLowerCase()))return json({game:published[id],alreadyLiked:true});
+      liked.push(player.toLowerCase());published[id].likedBy=liked;published[id].likes=liked.length;
+      await this.ctx.storage.put("published",published);
+      return json({game:published[id],alreadyLiked:false});
+    }
+    if (url.pathname === "/api/admin/submissions" && request.method === "GET") {
+      if(request.headers.get("X-Admin-Name")!=="Theadmin"||!this.env.ADMIN_PASSWORD||request.headers.get("X-Admin-Password")!==this.env.ADMIN_PASSWORD)return json({error:"Admin authorization failed."},401);
+      return json({submissions:Object.values(submissions).sort((a,b)=>a.submittedAt-b.submittedAt)});
+    }
+    if (url.pathname === "/api/admin/review" && request.method === "POST") {
+      if(request.headers.get("X-Admin-Name")!=="Theadmin"||!this.env.ADMIN_PASSWORD||request.headers.get("X-Admin-Password")!==this.env.ADMIN_PASSWORD)return json({error:"Admin authorization failed."},401);
+      let body;try{body=await request.json()}catch{return json({error:"Invalid request"},400)}
+      const id=String(body.id||"").toUpperCase(),action=String(body.action||"");
+      if(!submissions[id])return json({error:"Submission not found."},404);
+      if(!["approve","reject"].includes(action))return json({error:"Choose approve or reject."},400);
+      const item=submissions[id];
+      if(action==="approve"){
+        published[id]={id,title:item.title,description:item.description,category:item.category,kind:item.kind,owner:item.owner,payload:item.payload,likes:0,likedBy:[],approvedAt:Date.now()};
+      }
+      item.status=action==="approve"?"approved":"rejected";item.reviewedAt=Date.now();
+      await this.ctx.storage.put("submissions",submissions);await this.ctx.storage.put("published",published);
+      return json({ok:true,status:item.status});
     }
     if (url.pathname === "/api/admin/login" && request.method === "POST") {
       let body; try { body = await request.json(); } catch { return json({error:"Invalid request"},400); }
