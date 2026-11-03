@@ -553,7 +553,7 @@ function generateChunk(cx,cz){
   const treeSeed=Math.abs(Math.sin(x*127.1+z*311.7)*43758.5453)%1;
   if(treeSeed>.982&&Math.hypot(x,z)>5&&biome==='meadow')tree(x,z);
   if(Math.abs(Math.sin(x*17.13+z*41.7)*10000)%1>.994){
-   const flowerY=heightAt(x,z)+1;addBlock(x,flowerY,z,'flower',false);
+   // Flowers temporarily disabled while their collision behavior is corrected.
   }
  }
  // Apply saved mining/building changes after natural terrain is generated.
