@@ -37,6 +37,19 @@ export class Lobby extends DurableObject {
       });
       return json({game},201);
     }
+    if (url.pathname === "/api/ai/improve" && request.method === "POST") {
+      if(!this.env.AI)return json({error:"Cloudflare Workers AI is not enabled for this Worker yet."},503);
+      let body;try{body=await request.json()}catch{return json({error:"Invalid request"},400)}
+      const title=String(body.title||"").slice(0,80),idea=String(body.idea||"").slice(0,1200),category=String(body.category||"other").slice(0,30);
+      if(idea.trim().length<8)return json({error:"Describe your game idea first."},400);
+      try{
+        const result=await this.env.AI.run("@cf/meta/llama-3.1-8b-instruct",{messages:[
+          {role:"system",content:"You are SKYENGINE Creator Coach. Help young game creators improve safe, original voxel game ideas. Give practical suggestions for gameplay loop, level design, accessibility, fair multiplayer, and a short build checklist. Do not provide harmful, hateful, sexual, or dangerous content. Do not claim to publish or execute code."},
+          {role:"user",content:"Project: "+title+"\nCategory: "+category+"\nIdea: "+idea+"\nGive 5 specific improvements and a 3-step build plan."}
+        ]});
+        return json({suggestions:String(result.response||"No suggestions returned.")});
+      }catch(e){return json({error:"AI request failed. Check the Workers AI binding and account access."},502)}
+    }
     if (url.pathname === "/api/catalog" && request.method === "GET") {
       return json({ games: Object.values(published).sort((a,b)=>(b.approvedAt||0)-(a.approvedAt||0)) });
     }
