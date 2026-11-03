@@ -64,6 +64,24 @@ export class GameRoom extends DurableObject {
       const body = await request.json();
       const mode = MODES.has(body.mode) ? body.mode : "survival";
       await this.ctx.storage.put("gameInfo", { name:String(body.name||"Game").slice(0,28), mode });
+      if (mode === "parkour") {
+        const edits = {};
+        const pads = [
+          {x:0,y:8,z:0,size:3},
+          {x:4,y:9,z:0,size:2},
+          {x:8,y:10,z:2,size:2},
+          {x:12,y:11,z:0,size:2},
+          {x:16,y:12,z:-2,size:2},
+          {x:20,y:13,z:0,size:2},
+          {x:24,y:14,z:0,size:3,finish:true}
+        ];
+        for (const pad of pads) {
+          for (let dx=0; dx<pad.size; dx++) for (let dz=0; dz<pad.size; dz++) {
+            edits[`${pad.x+dx},${pad.y},${pad.z+dz}`] = pad.finish ? "gold_block" : "brick";
+          }
+        }
+        await this.ctx.storage.put("edits", edits);
+      }
       return new Response("ok");
     }
     if (request.headers.get("Upgrade") !== "websocket") return new Response("WebSocket connection required.", {status:426});
