@@ -369,7 +369,7 @@ function connectMultiplayer(){
  socket.onmessage=e=>{
   let msg;try{msg=JSON.parse(e.data)}catch{return}
   if(msg.type==='welcome'){
-   currentGameMode=msg.game?.mode||currentGameMode;creative=currentGameMode==='creative';document.getElementById('mode').textContent=creative?'Creative':'Survival';
+   currentGameMode=msg.game?.mode||currentGameMode;creative=currentGameMode==='creative';document.getElementById('mode').textContent=creative?'Creative':'Survival';if(currentGameMode==='parkour'){player.x=0;player.z=0;player.y=9.55;lastChunkX=Infinity;lastChunkZ=Infinity;updateChunks(true);toast('🏁 Parkour course loaded — reach the gold finish!')}updateStats();
    (msg.players||[]).forEach(p=>{if(p.id!==msg.id)makeRemotePlayer(p.id,p.name,p.x,p.y,p.z)});
    (msg.edits||[]).forEach(edit=>applyRemoteBlock(edit.key,edit.block));
    networkStatus('In room '+room+' · '+((msg.players||[]).length+1)+' player(s) online');
