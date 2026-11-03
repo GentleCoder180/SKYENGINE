@@ -700,8 +700,22 @@ function moveAxis(axis,amount){
  for(let i=0;i<steps;i++){
   const nx=player.x+(axis==='x'?step:0),nz=player.z+(axis==='z'?step:0);
   if(!bodyCollides(nx,player.y,nz)){player.x=nx;player.z=nz;continue;}
-  // Solid blocks, including glass, stop horizontal movement.
-  // Do not auto-step over a one-block wall; jumping must be intentional.
+  // Auto-step onto a single block while grounded; taller walls remain solid.
+  if(onGround){
+   const footY=player.y-PLAYER_BOTTOM;
+   const stepBlockY=Math.floor(footY+1);
+   const tx0=Math.floor(nx-PLAYER_RADIUS+.5),tx1=Math.floor(nx+PLAYER_RADIUS+.5);
+   const tz0=Math.floor(nz-PLAYER_RADIUS+.5),tz1=Math.floor(nz+PLAYER_RADIUS+.5);
+   let hasStepBlock=false;
+   for(let bx=tx0;bx<=tx1;bx++)for(let bz=tz0;bz<=tz1;bz++){
+    const type=blocks.get(key(bx,stepBlockY,bz));
+    if(type&&type!=='flower')hasStepBlock=true;
+   }
+   if(hasStepBlock&&!bodyCollides(nx,player.y+1,nz)){
+    player.x=nx;player.z=nz;player.y+=1;velocityY=0;onGround=true;lastFallY=player.y;
+    continue;
+   }
+  }
   break;
  }
 }
