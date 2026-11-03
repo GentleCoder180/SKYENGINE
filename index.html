@@ -296,7 +296,7 @@ function connectMultiplayer(){
  disconnectMultiplayer('Connecting…');multiplayerRoom=room;
  const url=new URL(MULTIPLAYER_SERVER);url.protocol=url.protocol==='https:'?'wss:':'ws:';url.pathname='/room/'+encodeURIComponent(room);
  const socket=new WebSocket(url);multiplayerSocket=socket;
- socket.onopen=()=>{const name=sessionStorage.getItem('skyengine-player-name')||'Player';sendNetwork({type:'join',name});networkStatus('Connected to room '+room+' — waiting for world sync…');document.getElementById('disconnectMultiplayer').style.display='inline-block';document.getElementById('connectMultiplayer').style.display='none'};
+ socket.onopen=()=>{const name=sessionStorage.getItem('skyengine-player-name')||'Player';sendNetwork({type:'join',name});networkStatus('Connected to room '+room+' — waiting for world sync…');document.getElementById('disconnectMultiplayer').style.display='inline-block';document.getElementById('connectMultiplayer').style.display='none';document.getElementById('multiplayerInfo').style.display='none';document.getElementById('menu').classList.add('show')};
  socket.onmessage=e=>{
   let msg;try{msg=JSON.parse(e.data)}catch{return}
   if(msg.type==='welcome'){
