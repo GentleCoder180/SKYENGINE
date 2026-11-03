@@ -16,6 +16,7 @@ Create a ZIP whose **root contains `index.html`** and whose other files (if any)
 - Main creator portal, custom video lounge, and admin UI are not shown in this release build.
 - CrazyGames HTML5 SDK v3 script and initialization.
 - CrazyGames gameplayStart/gameplayStop lifecycle calls on start, resume, and pause.
+- CrazyGames Data Module cloud progress saving for the world; localStorage fallback is retained for ordinary previews and SDK failures.
 - One-click start screen and an in-game shelter objective with control guidance.
 - Existing touch controls remain available on narrow screens.
 - Existing game code uses procedural voxel terrain and locally generated materials.
@@ -29,6 +30,7 @@ Create a ZIP whose **root contains `index.html`** and whose other files (if any)
 - Complete start-to-finish playthrough by someone other than the creator.
 - Ownership/license audit for every code, art, font, and sound asset included in the final ZIP.
 - CrazyGames Preview tool QA and final approval.
+- In the CrazyGames submission flow, enable the Progress Save/Data Module option so the SDK data store is available.
 
 ## Manual QA checklist
 
