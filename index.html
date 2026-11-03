@@ -48,7 +48,16 @@ button{font:inherit}#menu{position:fixed;inset:0;display:grid;place-items:center
  </div>
 </div>
 <div id="loginGate"><form class="panel login-card" id="loginForm"><h1 class="logo">SKY<span>ENGINE</span></h1><p class="tagline" id="authSubtitle">Log in to your account</p><div class="auth-tabs"><button class="secondary active" id="loginTab" type="button">LOG IN</button><button class="secondary" id="signInTab" type="button">SIGN IN</button></div><input id="loginName" autocomplete="username" placeholder="Account name" maxlength="24" required><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password (at least 6 characters)" minlength="6" required><div id="loginError" role="status"></div><button class="primary auth-submit" id="authSubmit" type="submit">LOG IN</button><p class="video-note">Accounts are saved only in this browser and are not protected by a secure online account server.</p></form></div>
-<div id="modeSelect"><div class="panel menu-card"><h1 class="logo">SKY<span>ENGINE</span></h1><p class="tagline">CHOOSE YOUR WORLD</p><div class="actions"><button class="primary" id="joinMultiplayer">🌐 JOIN MULTIPLAYER</button><button class="secondary" id="singleplayer">⛏ SINGLEPLAYER</button><button class="secondary" id="openAdmin">⚙ ADMIN</button></div></div></div>
+<div id="modeSelect"><div class="panel menu-card" style="width:min(1050px,100%);max-height:92vh;overflow:auto">
+ <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div style="text-align:left"><h1 class="logo">SKY<span>ENGINE</span></h1><p class="tagline">PLAY · CREATE · SHARE · BUILD WORLDS</p></div><button class="secondary" id="openAdmin">⚙ CREATOR ADMIN</button></div>
+ <div class="actions" style="margin:12px 0 18px"><button class="primary" id="joinMultiplayer">🌐 MULTIPLAYER</button><button class="secondary" id="singleplayer">⛏ PLAY YOUR WORLD</button><button class="secondary" id="openCreator">＋ CREATE & SUBMIT</button></div>
+ <h2 style="text-align:left;margin:12px 0 8px">DISCOVER GAMES</h2>
+ <div id="categoryChips" style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px"><button class="secondary" data-category="all">All</button><button class="secondary" data-category="adventure">Adventure</button><button class="secondary" data-category="survival">Survival</button><button class="secondary" data-category="creative">Creative</button><button class="secondary" data-category="parkour">Parkour</button><button class="secondary" data-category="minigames">Minigames</button><button class="secondary" data-category="roleplay">Roleplay</button><button class="secondary" data-category="puzzle">Puzzle</button><button class="secondary" data-category="racing">Racing</button><button class="secondary" data-category="other">Other</button></div>
+ <div id="catalogGames" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;text-align:left"><p class="video-note">Loading published games…</p></div>
+ <div id="creatorPanel" class="panel" style="display:none;text-align:left;padding:16px;margin-top:16px"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">CREATOR STUDIO</h2><button class="secondary" id="closeCreator">CLOSE</button></div><p class="video-note">Build a world or game, then send it to the Suggestions review queue. Only approved projects appear publicly.</p>
+ <form id="creatorForm" style="display:grid;gap:9px"><input id="creatorTitle" maxlength="40" required placeholder="Project title (3–40 characters)" style="padding:11px;border-radius:8px;background:#081426;color:white;border:1px solid var(--line)"><textarea id="creatorDescription" maxlength="500" required placeholder="Describe your world or game (at least 10 characters)" style="min-height:75px;padding:11px;border-radius:8px;background:#081426;color:white;border:1px solid var(--line)"></textarea><div style="display:flex;gap:8px;flex-wrap:wrap"><select id="creatorKind" style="padding:10px;background:#081426;color:white;border:1px solid var(--line);border-radius:8px"><option value="world">My own world</option><option value="game">A coded game</option></select><select id="creatorCategory" style="padding:10px;background:#081426;color:white;border:1px solid var(--line);border-radius:8px"><option value="adventure">Adventure</option><option value="survival">Survival</option><option value="creative">Creative</option><option value="parkour">Parkour</option><option value="minigames">Minigames</option><option value="roleplay">Roleplay</option><option value="puzzle">Puzzle</option><option value="racing">Racing</option><option value="other">Other</option></select></div><textarea id="creatorPayload" maxlength="50000" required placeholder="Paste your world data (JSON) or your game code (HTML/JS). Max 50 KB." style="min-height:130px;padding:11px;border-radius:8px;background:#081426;color:white;border:1px solid var(--line);font-family:monospace"></textarea><button class="primary" type="submit">SEND TO SUGGESTIONS</button><p id="creatorStatus" class="video-note" role="status"></p></form></div>
+ <p class="video-note" style="text-align:left;margin-top:16px">Likes are counted from player accounts. The 500-like goal is a real community milestone, not a preset count.</p>
+ </div></div>
 <div id="multiplayerInfo"><div class="panel menu-card" style="width:min(760px,100%);max-height:88vh;overflow:auto">
  <h1 class="logo">SKY<span>HUB</span></h1><p class="tagline">PLAY TOGETHER · PICK A GAME OR CREATE YOUR OWN</p>
  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;text-align:left;margin:14px 0">
@@ -65,7 +74,7 @@ button{font:inherit}#menu{position:fixed;inset:0;display:grid;place-items:center
  <p id="networkStatus" class="video-note">Server setup required before public rooms can connect.</p>
  <div class="actions"><button class="secondary" id="disconnectMultiplayer" style="display:none">DISCONNECT</button><button class="secondary" id="backToModes">← BACK</button></div>
  </div></div>
-<div id="adminPanel" style="position:fixed;inset:0;z-index:22;display:none;place-items:center;padding:18px;background:#071426ee"><div class="panel menu-card" style="width:min(430px,100%)"><h1 class="logo">SKY<span>ADMIN</span></h1><p class="tagline">ADMIN SIGN IN</p><input id="adminName" placeholder="Admin username" autocomplete="username" style="display:block;width:100%;margin:9px 0;padding:12px;border-radius:9px;border:1px solid var(--line);background:#081426;color:#fff"><input id="adminPassword" type="password" placeholder="Admin password" autocomplete="current-password" style="display:block;width:100%;margin:9px 0;padding:12px;border-radius:9px;border:1px solid var(--line);background:#081426;color:#fff"><p id="adminStatus" class="video-note"></p><div class="actions"><button class="primary" id="adminLogin">SIGN IN</button><button class="secondary" id="closeAdmin">CLOSE</button></div><div id="adminTools" style="display:none;text-align:left;margin-top:15px"><b>ADMIN TOOLS</b><p class="video-note">Remove a room from the public games list.</p><div id="adminGameList"></div></div></div></div>
+<div id="adminPanel" style="position:fixed;inset:0;z-index:22;display:none;place-items:center;padding:18px;background:#071426ee"><div class="panel menu-card" style="width:min(430px,100%)"><h1 class="logo">SKY<span>ADMIN</span></h1><p class="tagline">ADMIN SIGN IN</p><input id="adminName" placeholder="Admin username" autocomplete="username" style="display:block;width:100%;margin:9px 0;padding:12px;border-radius:9px;border:1px solid var(--line);background:#081426;color:#fff"><input id="adminPassword" type="password" placeholder="Admin password" autocomplete="current-password" style="display:block;width:100%;margin:9px 0;padding:12px;border-radius:9px;border:1px solid var(--line);background:#081426;color:#fff"><p id="adminStatus" class="video-note"></p><div class="actions"><button class="primary" id="adminLogin">SIGN IN</button><button class="secondary" id="closeAdmin">CLOSE</button></div><div id="adminTools" style="display:none;text-align:left;margin-top:15px"><b>ADMIN TOOLS</b><p class="video-note">Review player submissions before publishing. You can approve or reject each project.</p><div id="adminSubmissions"></div><hr style="border-color:#ffffff22;margin:14px 0"><p class="video-note">Remove a room from the public games list.</p><div id="adminGameList"></div></div></div></div>
 <div id="menu"><div class="panel menu-card"><h1 class="logo">SKY<span>ENGINE</span></h1><div class="tagline">INFINITE VOXEL WORLD · BUILD · EXPLORE · SURVIVE</div><div class="actions"><button class="primary" id="play">▶ PLAY WORLD</button><button class="secondary" id="newWorld">＋ NEW WORLD</button></div><div class="instructions"><b>Explore</b> a world that generates new land as you travel. Build a home, make a garden, or reshape the landscape.<br><b>Desktop:</b> WASD move · Shift sprint · mouse look · Space jump · left click mine · right click place.<br><b>Mobile:</b> use the movement pad and tap blocks to interact.<br><b>Tip:</b> Your world saves automatically in this browser.</div></div></div>
 <script>
 (function(){
@@ -104,7 +113,7 @@ button{font:inherit}#menu{position:fixed;inset:0;display:grid;place-items:center
     if(!accounts[accountKey]||accounts[accountKey].passwordHash!==await passwordHash(pass)){error.textContent='Account name or password is incorrect.';return}
    }
    sessionStorage.setItem('skyengine-player-name',name);document.getElementById('loginGate').style.display='none';
-   document.getElementById('modeSelect').style.display='grid';
+   document.getElementById('modeSelect').style.display='grid';loadCatalog();
    document.getElementById('loginPassword').value='';
   }catch(err){error.textContent='Could not save account in this browser. Check browser storage settings.'}
   finally{submit.disabled=false}
@@ -115,6 +124,8 @@ document.getElementById('joinMultiplayer').addEventListener('click',()=>{documen
 document.getElementById('backToModes').addEventListener('click',()=>{document.getElementById('multiplayerInfo').style.display='none';document.getElementById('modeSelect').style.display='grid'});
 
 const GAME_API=MULTIPLAYER_SERVER;
+// Catalog is loaded when the player reaches the SKYENGINE home screen.
+
 let currentGameMode='survival';
 const modeLabels={survival:'Survival',creative:'Creative Build',parkour:'Parkour'};
 async function apiRequest(path,options={}){
@@ -124,6 +135,29 @@ async function apiRequest(path,options={}){
  return data;
 }
 function escapeText(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+let activeCategory='all';
+async function loadCatalog(){
+ const box=document.getElementById('catalogGames');
+ if(GAME_API.includes('YOUR-WORKER')){box.innerHTML='<p class="video-note">Creator publishing is ready in the interface. Deploy the Cloudflare Worker and set MULTIPLAYER_SERVER to enable the shared catalog, submissions and likes.</p>';return}
+ try{
+  const data=await apiRequest('/api/catalog');
+  const games=data.games.filter(g=>activeCategory==='all'||g.category===activeCategory);
+  if(!games.length){box.innerHTML='<p class="video-note">No approved games in this category yet. Be the first creator to submit one!</p>';return}
+  box.innerHTML=games.map(g=>'<article class="panel" style="padding:13px;display:grid;gap:8px"><div style="font-size:11px;color:#8edcff;text-transform:uppercase">'+escapeText(g.category)+' · '+escapeText(g.kind)+'</div><b style="font-size:17px">'+escapeText(g.title)+'</b><div class="video-note">'+escapeText(g.description)+'</div><div class="video-note">By '+escapeText(g.owner)+'</div><div style="display:flex;justify-content:space-between;align-items:center"><span>❤️ '+Number(g.likes||0)+' / 500 likes</span><button class="secondary" data-like="'+escapeText(g.id)+'">♥ LIKE</button></div></article>').join('');
+  box.querySelectorAll('[data-like]').forEach(b=>b.addEventListener('click',async()=>{try{const r=await apiRequest('/api/like',{method:'POST',body:JSON.stringify({id:b.dataset.like,player:sessionStorage.getItem('skyengine-player-name')})});if(r.alreadyLiked)toast('You already liked this game');await loadCatalog()}catch(e){toast(e.message)}}));
+ }catch(e){box.innerHTML='<p class="video-note">'+escapeText(e.message)+'</p>'}
+}
+document.querySelectorAll('[data-category]').forEach(b=>b.addEventListener('click',()=>{activeCategory=b.dataset.category;loadCatalog()}));
+document.getElementById('openCreator').addEventListener('click',()=>document.getElementById('creatorPanel').style.display='block');
+document.getElementById('closeCreator').addEventListener('click',()=>document.getElementById('creatorPanel').style.display='none');
+document.getElementById('creatorForm').addEventListener('submit',async e=>{
+ e.preventDefault();const status=document.getElementById('creatorStatus');status.textContent='Sending your project…';
+ try{
+  const result=await apiRequest('/api/submit',{method:'POST',body:JSON.stringify({title:document.getElementById('creatorTitle').value,description:document.getElementById('creatorDescription').value,category:document.getElementById('creatorCategory').value,kind:document.getElementById('creatorKind').value,payload:document.getElementById('creatorPayload').value,owner:sessionStorage.getItem('skyengine-player-name')||'Player'})});
+  status.textContent='Submitted! Suggestion #'+result.id+' is waiting for admin review.';e.target.reset();
+ }catch(err){status.textContent=err.message}
+});
+
 async function refreshPublicGames(){
  const box=document.getElementById('publicGames');
  if(GAME_API.includes('YOUR-WORKER')){box.innerHTML='<p class="video-note">Deploy the Cloudflare Worker and add its URL to index.html to load public games.</p>';return}
@@ -155,9 +189,19 @@ document.getElementById('adminLogin').addEventListener('click',async()=>{
   if(!data.ok)throw new Error('Sign-in failed');
   sessionStorage.setItem('skyengine-admin-session','yes');
   document.getElementById('adminTools').style.display='block';status.textContent='Admin verified. Public room controls are ready.';
-  await loadAdminGames(username,password);
+  await loadAdminGames(username,password);await loadAdminSubmissions(username,password);
  }catch(e){status.textContent=e.message}
 });
+
+async function loadAdminSubmissions(username,password){
+ const box=document.getElementById('adminSubmissions');
+ try{
+  const data=await apiRequest('/api/admin/submissions',{headers:{'X-Admin-Name':username,'X-Admin-Password':password}});
+  const pending=data.submissions.filter(x=>x.status==='pending');
+  box.innerHTML=pending.length?pending.map(x=>'<div class="panel" style="padding:11px;margin:8px 0"><b>'+escapeText(x.title)+'</b><div class="video-note">'+escapeText(x.category)+' · '+escapeText(x.kind)+' · by '+escapeText(x.owner)+'</div><p class="video-note">'+escapeText(x.description)+'</p><div style="display:flex;gap:8px"><button class="primary" data-review="approve" data-id="'+escapeText(x.id)+'">APPROVE & PUBLISH</button><button class="secondary" data-review="reject" data-id="'+escapeText(x.id)+'">REJECT</button></div></div>').join(''):'<p class="video-note">No pending suggestions.</p>';
+  box.querySelectorAll('[data-review]').forEach(b=>b.addEventListener('click',async()=>{try{await apiRequest('/api/admin/review',{method:'POST',headers:{'X-Admin-Name':username,'X-Admin-Password':password},body:JSON.stringify({id:b.dataset.id,action:b.dataset.review})});await loadAdminSubmissions(username,password);await loadCatalog()}catch(e){document.getElementById('adminStatus').textContent=e.message}}));
+ }catch(e){box.textContent=e.message}
+}
 async function loadAdminGames(username,password){
  const data=await apiRequest('/api/games');
  const box=document.getElementById('adminGameList');
