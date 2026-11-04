@@ -646,8 +646,15 @@ function moveAxis(axis,amount){
  for(let i=0;i<steps;i++){
   const nx=player.x+(axis==='x'?step:0),nz=player.z+(axis==='z'?step:0);
   if(!bodyCollides(nx,player.y,nz)){player.x=nx;player.z=nz;continue;}
-  // Solid blocks, including glass, stop horizontal movement.
-  // Do not auto-step over a one-block wall; jumping must be intentional.
+  // Minecraft-style step assist: climb exactly one block while grounded.
+  // The full body is checked at the raised height, so two-block walls and
+  // low ceilings still block the player.
+  if(onGround&&velocityY<=0&&!bodyCollides(nx,player.y+1,nz)){
+   player.x=nx;player.z=nz;player.y+=1;velocityY=0;onGround=true;
+   lastFallY=player.y;
+   continue;
+  }
+  // Taller obstacles remain solid; use SPACE to jump over them.
   break;
  }
 }
