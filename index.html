@@ -355,7 +355,7 @@ function syncRender(){
     }
     const center=new THREE.Mesh(new THREE.SphereGeometry(.055,6,5),new THREE.MeshLambertMaterial({color:0xffd84d}));
     center.position.y=.35;bloom.add(center);
-    bloom.position.set(x,y,z);
+    bloom.position.set(x,y-.5,z); // stem base touches the grass surface
     bloom.traverse(part=>{if(part.isMesh){part.userData.type='flower';part.userData.blockKey=k}});
     scene.add(bloom);meshes.set('flower:'+k,bloom);
    });
@@ -458,21 +458,27 @@ function buildHouse(cx,cz,w,d,wall,roof){
 }
 function preserveVillage(){for(const [k,v] of blocks){const [x,,z]=k.split(',').map(Number);const houseOrPath=x>=5&&x<=15&&z>=-17&&z<=5;const mine=x>=-11&&x<=-8&&z>=-5&&z<=-2;if(houseOrPath||mine)worldEdits.set(k,v)}}
 function buildVillageAndMine(){
- // Three small houses and a path form a visible village ahead of spawn.
- buildHouse(7,-7,5,5,'wood','brick');
- buildHouse(13,-7,5,5,'brick','brick');
- buildHouse(10,-14,5,5,'wood','wood');
- for(let z=-5;z<=5;z++)for(let x=8;x<=10;x++){
-  const y=heightAt(x,z);addBlock(x,y+1,z,'sand',false);
- }
- // A framed mine shaft sits on the hill to the left of the village.
- const mx=-9,mz=-3,top=heightAt(mx,mz);
- for(let x=mx-1;x<=mx;x++)for(let z=mz-1;z<=mz;z++)for(let y=top-4;y<=top;y++){const k=key(x,y,z);blocks.delete(k);worldEdits.set(k,null);}
- for(let x=mx-2;x<=mx+1;x++){addBlock(x,top+1,mz-2,'stone',false);addBlock(x,top+1,mz+1,'stone',false)}
- for(let z=mz-1;z<=mz;z++){addBlock(mx-2,top+1,z,'stone',false);addBlock(mx+1,top+1,z,'stone',false)}
- addBlock(mx-2,top+2,mz-2,'wood',false);addBlock(mx+1,top+2,mz-2,'wood',false);
- addBlock(mx-2,top+2,mz+1,'wood',false);addBlock(mx+1,top+2,mz+1,'wood',false);
- for(let y=top;y>top-4;y--){addBlock(mx-2,y,mz-2,'wood',false);addBlock(mx+1,y,mz-2,'wood',false)}
+  // Village houses, a path, and a visible cave entrance near spawn.
+  buildHouse(7,-7,5,5,'wood','brick');
+  buildHouse(13,-7,5,5,'brick','brick');
+  buildHouse(10,-14,5,5,'wood','wood');
+  for(let z=-5;z<=5;z++)for(let x=8;x<=10;x++){
+   const y=heightAt(x,z);addBlock(x,y+1,z,'sand',false);
+  }
+  // Carve a 3-wide, 3-high cave entrance and a tunnel into the hillside.
+  const mx=-9,mz=-3;
+  for(let z=mz-2;z<=mz+9;z++){
+   const floor=heightAt(mx,z);
+   for(let x=mx-1;x<=mx+1;x++){
+    addBlock(x,floor,z,'stone',false);
+    for(let y=floor+1;y<=floor+3;y++){const k=key(x,y,z);blocks.delete(k);worldEdits.set(k,null);}
+   }
+   if(z<=mz+1){
+    addBlock(mx-2,floor+1,z,'stone',false);
+    addBlock(mx+2,floor+1,z,'stone',false);
+    addBlock(mx,floor+4,z,'stone',false);
+   }
+  }
 }
 const CHUNK_SIZE=16,CHUNK_RADIUS=1,loadedChunks=new Set(); // Infinite terrain streams in around the player.
 let lastChunkX=Infinity,lastChunkZ=Infinity;
@@ -499,9 +505,9 @@ function generateChunk(cx,cz){
   // Deterministic trees: the same coordinates always produce the same forest.
   const treeSeed=Math.abs(Math.sin(x*127.1+z*311.7)*43758.5453)%1;
   if(treeSeed>.982&&Math.hypot(x,z)>5&&biome==='meadow')tree(x,z);
-  if(Math.abs(Math.sin(x*17.13+z*41.7)*10000)%1>.994){
-   const flowerY=heightAt(x,z)+1;addBlock(x,flowerY,z,'flower',false);
-  }
+  if(biome==='meadow'&&Math.abs(Math.sin(x*17.13+z*41.7)*10000)%1>.994){
+    const flowerY=heightAt(x,z)+1;addBlock(x,flowerY,z,'flower',false);
+   }
  }
  // Apply saved mining/building changes after natural terrain is generated.
  for(const [k,v] of worldEdits){const [x,y,z]=k.split(',').map(Number);if(x>=minX&&x<minX+CHUNK_SIZE&&z>=minZ&&z<minZ+CHUNK_SIZE){if(v===null)blocks.delete(k);else blocks.set(k,v)}}
@@ -528,7 +534,7 @@ function updateChunks(force=false){
 }
 function generate(){
  blocks.clear();meshes.clear();loadedChunks.clear();worldEdits.clear();animals.forEach(a=>scene.remove(a.group));animals=[];placed=0;
- let spawnX,spawnZ;do{spawnX=Math.floor(Math.random()*65)-32;spawnZ=Math.floor(Math.random()*65)-32;}while((spawnX>=4&&spawnX<=18&&spawnZ>=-19&&spawnZ<=-3)||(spawnX>=-13&&spawnX<=-6&&spawnZ>=-7&&spawnZ<=1));player.x=spawnX;player.z=spawnZ;player.y=heightAt(spawnX,spawnZ)+2;health=20;hunger=20;xp=0;level=0;for(const t of blockTypes)inventory[t]=0;inventory.food=0;creative=false;document.getElementById('mode').textContent='Survival';lastChunkX=Infinity;lastChunkZ=Infinity;
+ const spawnX=0,spawnZ=7;player.x=spawnX;player.z=spawnZ;player.y=heightAt(spawnX,spawnZ)+2;health=20;hunger=20;xp=0;level=0;for(const t of blockTypes)inventory[t]=0;inventory.food=0;creative=false;document.getElementById('mode').textContent='Survival';lastChunkX=Infinity;lastChunkZ=Infinity;
  updateChunks(true);
  // Clear a small safe landing area so each new world starts in an open spot.
  for(let sx=spawnX-1;sx<=spawnX+1;sx++)for(let sz=spawnZ-1;sz<=spawnZ+1;sz++)for(let sy=heightAt(sx,sz)+1;sy<=heightAt(sx,sz)+4;sy++){const sk=key(sx,sy,sz);if(blocks.has(sk)){blocks.delete(sk);worldEdits.set(sk,null);}}
@@ -539,19 +545,27 @@ function save(){const data={edits:[...worldEdits.entries()],player,selected,inve
 function load(){try{const d=JSON.parse(localStorage.getItem('skyblocks-world'));if(!d?.edits)return false;worldEdits.clear();for(const [k,v] of d.edits)worldEdits.set(k,v);Object.assign(player,d.player||{});selected=d.selected||'grass';if(d.inventory)Object.assign(inventory,d.inventory);creative=d.creative??false;health=d.health??20;hunger=d.hunger??20;xp=d.xp??0;level=d.level??0;lastChunkX=Infinity;lastChunkZ=Infinity;updateChunks(true);if(player.x===undefined||player.z===undefined){player.x=0;player.z=7;player.y=heightAt(0,7)+2}buildVillageAndMine();for(const [k,v] of worldEdits){if(v===null)blocks.delete(k);else blocks.set(k,v)}spawnAnimals();syncRender();document.getElementById('mode').textContent=creative?'Creative':'Survival';updateStats();return true}catch(e){return false}}
 function spawnAnimals(){
  animals.forEach(a=>scene.remove(a.group));animals=[];
- const kinds=['sheep','sheep','cow','cow','pig','pig','chicken','chicken','zombie','skeleton','iron_golem','iron_golem'];
+ const kinds=['sheep','sheep','cow','cow','pig','pig','chicken','chicken','zombie','skeleton','iron_golem','iron_golem','villager','villager','villager'];
  for(let i=0;i<kinds.length;i++){
   const kind=kinds[i],group=new THREE.Group();
-  const colors={sheep:0xf0eee6,cow:0x8b684b,pig:0xe99b9b,chicken:0xf5f0dc,zombie:0x397b45,skeleton:0xd8d8c8,iron_golem:0xb9b8a8};
+  const colors={sheep:0xf0eee6,cow:0x8b684b,pig:0xe99b9b,chicken:0xf5f0dc,zombie:0x397b45,skeleton:0xd8d8c8,iron_golem:0xb9b8a8,villager:0x98704c};
   const bodyMat=new THREE.MeshLambertMaterial({color:colors[kind]});
   const dark=new THREE.MeshLambertMaterial({color:kind==='iron_golem'?0x777b76:kind==='skeleton'?0x777777:0x4b3530});
-  const tall=kind==='iron_golem',body=new THREE.Mesh(new THREE.BoxGeometry(tall?.9:.75,tall?1.25:.62,tall?.55:.48),bodyMat);body.position.y=tall?1.05:.72;group.add(body);
-  const head=new THREE.Mesh(new THREE.BoxGeometry(tall?.55:.38,tall?.55:.4,tall?.5:.38),bodyMat);head.position.set(0,tall?1.95:1.22,0);group.add(head);
+  const tall=kind==='iron_golem',villager=kind==='villager';
+   const body=new THREE.Mesh(new THREE.BoxGeometry(tall?.9:villager?.58:.75,tall?1.25:villager?.85:.62,tall?.55:villager?.48:.48),bodyMat);
+   body.position.y=tall?1.05:villager?.88:.72;group.add(body);
+   if(villager){const robe=new THREE.Mesh(new THREE.BoxGeometry(.64,.72,.52),new THREE.MeshLambertMaterial({color:0x6b8d55}));robe.position.y=.72;group.add(robe);}
+  const head=new THREE.Mesh(new THREE.BoxGeometry(tall?.55:villager?.48:.38,tall?.55:villager?.48:.4,tall?.5:villager?.42:.38),bodyMat);
+   head.position.set(0,tall?1.95:villager?1.52:1.22,0);group.add(head);
+   if(villager){const nose=new THREE.Mesh(new THREE.BoxGeometry(.13,.22,.2),dark);nose.position.set(0,1.48,.28);group.add(nose);}
   if(tall){const nose=new THREE.Mesh(new THREE.BoxGeometry(.16,.28,.16),dark);nose.position.set(0,1.9,.29);group.add(nose);for(const side of [-1,1]){const arm=new THREE.Mesh(new THREE.BoxGeometry(.22,1.1,.24),bodyMat);arm.position.set(side*.62,1.05,0);group.add(arm)}}
   else{const muzzle=new THREE.Mesh(new THREE.BoxGeometry(.2,.18,.2),dark);muzzle.position.set(0,1.12,.2);group.add(muzzle)}
   for(const side of [-1,1])for(const front of [-1,1]){const leg=new THREE.Mesh(new THREE.BoxGeometry(.14,tall?.62:.38,.14),dark);leg.position.set(side*.22,tall?.31:.28,front*.14);group.add(leg)}
-  const golemIndex=i-10,sx=tall?(golemIndex===0?6:12):player.x-22+Math.random()*44,sz=tall?-2:-22+Math.random()*44;
-  group.position.set(sx,heightAt(sx,sz)+.5,sz);scene.add(group);animals.push({group,phase:i*1.7,speed:tall?.08:.18+i*.025,sheared:false,kind});
+  const golemIndex=i-10,villagerIndex=i-12;
+   const sx=villager?(villagerIndex===0?7:villagerIndex===1?12:10):tall?(golemIndex===0?6:12):player.x-22+Math.random()*44;
+   const sz=villager?(villagerIndex===0?-7:villagerIndex===1?-7:-14):tall?-2:-22+Math.random()*44;
+   group.position.set(sx,heightAt(sx,sz)+.5,sz);scene.add(group);
+   animals.push({group,phase:i*1.7,speed:villager?.12:tall?.08:.18+i*.025,sheared:false,kind});
  }
 }
 function gainXP(amount,x,y,z){
