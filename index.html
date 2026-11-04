@@ -152,6 +152,7 @@ const GAME_API='https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev';
 // Catalog is loaded when the player reaches the SKYENGINE home screen.
 
 let currentGameMode='survival';
+let parkourVoid=false;
 const modeLabels={survival:'Survival',creative:'Creative Build',parkour:'Parkour'};
 async function apiRequest(path,options={}){
  const response=await fetch(GAME_API+path,{...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});
@@ -439,7 +440,7 @@ function connectMultiplayer(){
  socket.onmessage=e=>{
   let msg;try{msg=JSON.parse(e.data)}catch{return}
   if(msg.type==='welcome'){
-   currentGameMode=msg.game?.mode||currentGameMode;creative=currentGameMode==='creative';document.getElementById('mode').textContent=creative?'Creative':'Survival';if(currentGameMode==='parkour'){player.x=0;player.z=0;player.y=9.55;lastChunkX=Infinity;lastChunkZ=Infinity;updateChunks(true);toast('🏁 Parkour course loaded — reach the gold finish!')}updateStats();
+   currentGameMode=msg.game?.mode||currentGameMode;creative=currentGameMode==='creative';document.getElementById('mode').textContent=creative?'Creative':'Survival';if(currentGameMode==='parkour'){prepareVoidParkour(11);toast('🏁 Parkour Only: floating platforms, no terrain!')}updateStats();
    (msg.players||[]).forEach(p=>{if(p.id!==msg.id)makeRemotePlayer(p.id,p.name,p.x,p.y,p.z)});
    (msg.edits||[]).forEach(edit=>applyRemoteBlock(edit.key,edit.block));
    networkStatus('In room '+room+' · '+((msg.players||[]).length+1)+' player(s) online');
@@ -540,6 +541,7 @@ function generateChunk(cx,cz){
  loadedChunks.add(id);
 }
 function updateChunks(force=false){
+ if(parkourVoid)return;
  const cx=Math.floor(player.x/CHUNK_SIZE),cz=Math.floor(player.z/CHUNK_SIZE);
  if(!force&&cx===lastChunkX&&cz===lastChunkZ)return;
  lastChunkX=cx;lastChunkZ=cz;
@@ -559,6 +561,7 @@ function updateChunks(force=false){
  if(changed)syncRender();
 }
 function generate(){
+ parkourVoid=false;currentGameMode='survival';
  blocks.clear();meshes.clear();loadedChunks.clear();worldEdits.clear();animals.forEach(a=>scene.remove(a.group));animals=[];placed=0;
  const spawnX=0,spawnZ=7;player.x=spawnX;player.z=spawnZ;player.y=heightAt(spawnX,spawnZ)+2;health=20;hunger=20;xp=0;level=0;for(const t of blockTypes)inventory[t]=0;inventory.food=0;creative=false;document.getElementById('mode').textContent='Survival';lastChunkX=Infinity;lastChunkZ=Infinity;
  updateChunks(true);
@@ -705,26 +708,35 @@ function moveAxis(axis,amount){
 let arcadeBlocks=[];
 function clearArcadeBlocks(){for(const k of arcadeBlocks){blocks.delete(k);worldEdits.set(k,null)}arcadeBlocks=[];syncRender()}
 function arcadeBlock(x,y,z,type='white_concrete'){const k=key(x,y,z);if(!blocks.has(k)){blocks.set(k,type);worldEdits.set(k,type);arcadeBlocks.push(k)}}
+function prepareVoidParkour(count=11){
+ parkourVoid=true;currentGameMode='parkour';blocks.clear();meshes.clear();loadedChunks.clear();worldEdits.clear();arcadeBlocks=[];
+ animals.forEach(a=>scene.remove(a.group));animals=[];xpOrbs.forEach(o=>scene.remove(o.mesh));xpOrbs=[];
+ const base=8;
+ for(let i=0;i<count;i++){
+  const cx=(i===0||i===count-1)?0:(i%2?3:-3),cz=7-i*3.4,y=base+Math.floor(i/3)%3;
+  for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++)arcadeBlock(cx+dx,y,Math.round(cz+dz),i===count-1?'gold_block':i%3===0?'glass':'white_concrete');
+  if(i>0&&i%3===0)arcadeBlock(cx,y+1,Math.round(cz),'gold_block');
+ }
+ player.x=0;player.z=7;player.y=base+1.55;velocityY=0;onGround=false;lastFallY=player.y;
+ lastChunkX=Infinity;lastChunkZ=Infinity;syncRender();camera.position.set(player.x,player.y+.35,player.z);updateStats();
+}
 function launchBuiltinGame(mode){
  clearArcadeBlocks();creative=true;document.getElementById('mode').textContent='Creative';document.getElementById('modeSelect').style.display='none';document.getElementById('menu').classList.add('hidden');document.getElementById('inventoryPanel').classList.remove('open');inventoryOpen=false;
  const base=heightAt(0,7)+5;
  if(mode==='parkour'||mode==='race'){
-  const count=mode==='race'?18:11;
-  for(let i=0;i<count;i++){const cx=(i===0||i===count-1)?0:(i%2?3:-3);const cz=7-i*(mode==='race'?3.1:3.4);const y=base+Math.floor(i/3)%3;
-   for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++)arcadeBlock(cx+dx,y,Math.round(cz+dz),i===count-1?'gold_block':i%3===0?'glass':'white_concrete');
-  }
-  player.x=0;player.z=7;player.y=base+1.55;toast(mode==='race'?'SKY RACE: reach the gold platform!':'PARKOUR: jump across the floating platforms!');
+  prepareVoidParkour(mode==='race'?18:11);
+  toast(mode==='race'?'SKY RACE: floating platforms only — reach the gold finish!':'PARKOUR: floating platforms only — no land!');
  }else{
   const rows=['11111111111','10000000001','10111011101','10100000101','10101110101','10001000101','11101010101','10000010101','10111010101','10000000001','11111111111'];
   const floorY=base-1;
   for(let z=0;z<rows.length;z++)for(let x=0;x<rows[z].length;x++){const wx=x-5,wz=7-z;arcadeBlock(wx,floorY,wz,'white_concrete');if(rows[z][x]==='1'&&!(z===1&&x===1)&&!(z===9&&x===9)){arcadeBlock(wx,floorY+1,wz,'white_concrete');arcadeBlock(wx,floorY+2,wz,'white_concrete')}}
   arcadeBlock(4,floorY,-2,'gold_block');player.x=-4;player.z=6;player.y=floorY+1.55;toast('MAZE ESCAPE: find the gold exit!');
  }
- velocityY=0;onGround=false;lastFallY=player.y;yaw=0;pitch=0;paused=false;started=true;updateChunks();syncRender();camera.position.set(player.x,player.y+.35,player.z);updateStats();save();if(innerWidth>700)renderer.domElement.requestPointerLock?.();
+ velocityY=0;onGround=false;lastFallY=player.y;yaw=0;pitch=0;paused=false;started=true;if(!parkourVoid)updateChunks();syncRender();camera.position.set(player.x,player.y+.35,player.z);updateStats();save();if(innerWidth>700)renderer.domElement.requestPointerLock?.();
 }
 document.querySelectorAll('[data-local-game]').forEach(b=>b.addEventListener('click',()=>launchBuiltinGame(b.dataset.localGame)));
 
-let fpsFrames=0,fpsTime=0;function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.04);fpsFrames++;fpsTime+=dt;if(fpsTime>=.5){const f=Math.round(fpsFrames/fpsTime);fpsFrames=0;fpsTime=0;document.title='SKYENGINE · '+f+' FPS'}if(!paused){if(multiplayerSocket&&multiplayerSocket.readyState===WebSocket.OPEN){networkSendClock+=dt;if(networkSendClock>=.1){networkSendClock=0;sendNetwork({type:'player',x:player.x,y:player.y,z:player.z,yaw,name:sessionStorage.getItem('skyengine-player-name')||'Player'})}}if(mining&&!inventoryOpen){const hit=targetBlock();const p=hit?.block;const pickaxeBlocks=['stone','coal','iron','gold_block','diamond','brick'];const usesPickaxe=pickaxeBlocks.includes(p?.type);const tool=toolsList[toolIndex];const speed=usesPickaxe?tool.power:1;const needed=p?Math.max(.1,(mineSeconds[p.type]??3)/speed):3;if(!p||key(p.x,p.y,p.z)!==mining.key){stopMining()}else{mining.elapsed+=dt;const left=Math.max(0,needed-mining.elapsed);mineStatus.style.display='block';mineStatus.textContent='⛏ '+p.type.toUpperCase()+' · '+Math.ceil(left)+'s';if(mining.elapsed>=needed)breakMinedBlock(p)}}worldTime=(worldTime+dt*.018)%(Math.PI*2);const daylight=Math.max(.12,Math.sin(worldTime)*.5+.5);sun.intensity=.35+daylight*2.0;scene.background.setHSL(.56,.55,.25+daylight*.28);scene.fog.color.copy(scene.background);sun.position.set(Math.cos(worldTime)*28,Math.max(5,Math.sin(worldTime)*35),12);camera.rotation.set(pitch,yaw,0,'YXZ');const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));const move=new THREE.Vector3();if(!inventoryOpen){if(keys.KeyW||keys.ArrowUp)move.add(forward);if(keys.KeyS||keys.ArrowDown)move.sub(forward);if(keys.KeyD||keys.ArrowRight)move.add(right);if(keys.KeyA||keys.ArrowLeft)move.sub(right);}if(move.lengthSq())move.normalize().multiplyScalar((keys.ShiftLeft||keys.ShiftRight?9:6)*dt);moveAxis('x',move.x);moveAxis('z',move.z);updateChunks();
+let fpsFrames=0,fpsTime=0;function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.04);fpsFrames++;fpsTime+=dt;if(fpsTime>=.5){const f=Math.round(fpsFrames/fpsTime);fpsFrames=0;fpsTime=0;document.title='SKYENGINE · '+f+' FPS'}if(!paused){if(multiplayerSocket&&multiplayerSocket.readyState===WebSocket.OPEN){networkSendClock+=dt;if(networkSendClock>=.1){networkSendClock=0;sendNetwork({type:'player',x:player.x,y:player.y,z:player.z,yaw,name:sessionStorage.getItem('skyengine-player-name')||'Player'})}}if(mining&&!inventoryOpen){const hit=targetBlock();const p=hit?.block;const pickaxeBlocks=['stone','coal','iron','gold_block','diamond','brick'];const usesPickaxe=pickaxeBlocks.includes(p?.type);const tool=toolsList[toolIndex];const speed=usesPickaxe?tool.power:1;const needed=p?Math.max(.1,(mineSeconds[p.type]??3)/speed):3;if(!p||key(p.x,p.y,p.z)!==mining.key){stopMining()}else{mining.elapsed+=dt;const left=Math.max(0,needed-mining.elapsed);mineStatus.style.display='block';mineStatus.textContent='⛏ '+p.type.toUpperCase()+' · '+Math.ceil(left)+'s';if(mining.elapsed>=needed)breakMinedBlock(p)}}worldTime=(worldTime+dt*.018)%(Math.PI*2);const daylight=Math.max(.12,Math.sin(worldTime)*.5+.5);sun.intensity=.35+daylight*2.0;scene.background.setHSL(.56,.55,.25+daylight*.28);scene.fog.color.copy(scene.background);sun.position.set(Math.cos(worldTime)*28,Math.max(5,Math.sin(worldTime)*35),12);camera.rotation.set(pitch,yaw,0,'YXZ');const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));const move=new THREE.Vector3();if(!inventoryOpen){if(keys.KeyW||keys.ArrowUp)move.add(forward);if(keys.KeyS||keys.ArrowDown)move.sub(forward);if(keys.KeyD||keys.ArrowRight)move.add(right);if(keys.KeyA||keys.ArrowLeft)move.sub(right);}if(move.lengthSq())move.normalize().multiplyScalar((keys.ShiftLeft||keys.ShiftRight?9:6)*dt);moveAxis('x',move.x);moveAxis('z',move.z);if(!parkourVoid)updateChunks();
  // Jump and gravity with voxel collision on the player's full body.
  if(jumpHeld&&onGround&&!inventoryOpen){velocityY=7.5;onGround=false;lastFallY=player.y}
  const gliding=selected==='glider'&&!onGround&&jumpHeld&&velocityY<0;
