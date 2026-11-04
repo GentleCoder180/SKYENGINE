@@ -718,7 +718,7 @@ function launchBuiltinGame(mode){
   const rows=['11111111111','10000000001','10111011101','10100000101','10101110101','10001000101','11101010101','10000010101','10111010101','10000000001','11111111111'];
   const floorY=base-1;
   for(let z=0;z<rows.length;z++)for(let x=0;x<rows[z].length;x++){const wx=x-5,wz=7-z;arcadeBlock(wx,floorY,wz,'white_concrete');if(rows[z][x]==='1'&&!(z===1&&x===1)&&!(z===9&&x===9)){arcadeBlock(wx,floorY+1,wz,'white_concrete');arcadeBlock(wx,floorY+2,wz,'white_concrete')}}
-  arcadeBlock(4,floorY+1,-2,'gold_block');player.x=-4;player.z=6;player.y=floorY+1.55;toast('MAZE ESCAPE: find the gold exit!');
+  arcadeBlock(4,floorY,-2,'gold_block');player.x=-4;player.z=6;player.y=floorY+1.55;toast('MAZE ESCAPE: find the gold exit!');
  }
  velocityY=0;onGround=false;lastFallY=player.y;yaw=0;pitch=0;paused=false;started=true;updateChunks();syncRender();camera.position.set(player.x,player.y+.35,player.z);updateStats();save();if(innerWidth>700)renderer.domElement.requestPointerLock?.();
 }
