@@ -456,7 +456,7 @@ function buildHouse(cx,cz,w,d,wall,roof){
  for(let x=x0-1;x<=x0+w;x++)for(let z=z0-1;z<=z0+d;z++)addBlock(x,base+4,z,roof,false);
  addBlock(cx,base+1,z0+d-1,'wood',false);addBlock(cx,base+2,z0+d-1,'wood',false);
 }
-function preserveVillage(){for(const [k,v] of blocks){const [x,,z]=k.split(',').map(Number);const houseOrPath=x>=5&&x<=15&&z>=-17&&z<=5;const mine=x>=-11&&x<=-8&&z>=-5&&z<=-2;if(houseOrPath||mine)worldEdits.set(k,v)}}
+function preserveVillage(){for(const [k,v] of blocks){const [x,,z]=k.split(',').map(Number);const houseOrPath=x>=5&&x<=15&&z>=-17&&z<=5;const mine=x>=-11&&x<=-7&&z>=-5&&z<=6;if(houseOrPath||mine)worldEdits.set(k,v)}}
 function buildVillageAndMine(){
   // Village houses, a path, and a visible cave entrance near spawn.
   buildHouse(7,-7,5,5,'wood','brick');
@@ -563,7 +563,7 @@ function spawnAnimals(){
   for(const side of [-1,1])for(const front of [-1,1]){const leg=new THREE.Mesh(new THREE.BoxGeometry(.14,tall?.62:.38,.14),dark);leg.position.set(side*.22,tall?.31:.28,front*.14);group.add(leg)}
   const golemIndex=i-10,villagerIndex=i-12;
    const sx=villager?(villagerIndex===0?7:villagerIndex===1?12:10):tall?(golemIndex===0?6:12):player.x-22+Math.random()*44;
-   const sz=villager?(villagerIndex===0?-7:villagerIndex===1?-7:-14):tall?-2:-22+Math.random()*44;
+   const sz=villager?(villagerIndex===0?-4:villagerIndex===1?-4:-11):tall?-2:-22+Math.random()*44;
    group.position.set(sx,heightAt(sx,sz)+.5,sz);scene.add(group);
    animals.push({group,phase:i*1.7,speed:villager?.12:tall?.08:.18+i*.025,sheared:false,kind});
  }
